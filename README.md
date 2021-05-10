@@ -4,7 +4,7 @@ Hi! I’m Huachen Chen, @hchen3368.
 
 I’m interested in Data Science, Machine Learning, Coding, Mathematics, and curious about all sort of knowledge in general!!
 
-I currently focus on learning Data Science, Machine Learning, and Deep Learning.
+I currently focus on Data Science and Machine Learning.
 
 I’m very interested in collabrations on all sort of things, e.g. data science projects!
 

@@ -56,7 +56,8 @@ class LocalWhisperSource:
 
         audio_path = audio.ensure_episode_audio(episode, workdir)
         model = WhisperModel(self.model_size, device="cpu", compute_type=self.compute_type)
-        segments, _ = model.transcribe(str(audio_path), vad_filter=True, beam_size=1)
+        samples = audio.decode_mono_16k(audio_path)
+        segments, _ = model.transcribe(samples, vad_filter=True, beam_size=1)
         text = "\n".join(segment.text.strip() for segment in segments)
         return Transcript(text=text, source=f"{self.name}:{self.model_size}")
 

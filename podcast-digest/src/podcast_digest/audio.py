@@ -35,6 +35,16 @@ def concat_and_normalize(parts: list[Path], dest: Path) -> Path:
     return dest
 
 
+def decode_mono_16k(path: Path):
+    import numpy as np
+
+    result = subprocess.run(
+        ["ffmpeg", "-loglevel", "error", "-i", str(path), "-f", "s16le", "-ac", "1", "-ar", "16000", "-"],
+        check=True, capture_output=True,
+    )
+    return np.frombuffer(result.stdout, dtype=np.int16).astype(np.float32) / 32768.0
+
+
 def duration_seconds(path: Path) -> float:
     result = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)],

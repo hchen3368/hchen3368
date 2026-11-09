@@ -59,6 +59,13 @@ Useful options: `--transcript-sources published,openai-transcribe`, `--whisper-m
 | Notes + script | `gpt-5.4-mini` | a few cents |
 | Speech (5 min) | `gpt-4o-mini-tts` | ~$0.08 |
 
+## Verified runs
+
+| Episode | Length | Transcript source | Digest | Wall time |
+|---|---|---|---|---|
+| Lex Fridman #503 – AI Crisis in Math | 3h 42m | published (39k words, free) | 5:03 | ~73 s |
+| Huberman Lab Essentials – Cold & Heat | 38 min | local whisper `base.en` (free) | 4:19 | ~3 min on 4 CPUs |
+
 ## Extending
 
 Backends are small classes behind protocols, so adding a provider doesn't touch the pipeline:

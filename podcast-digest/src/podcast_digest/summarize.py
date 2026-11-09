@@ -3,19 +3,13 @@ from __future__ import annotations
 import re
 
 from . import prompts
+from .languages import LANGUAGES, Language
 from .llm import LLM
-from .models import Digest, Episode, Transcript
+from .models import Episode
 
-WORDS_PER_MINUTE = 150
 SINGLE_PASS_MAX_WORDS = 120_000
 CHUNK_WORDS = 40_000
 TRANSCRIPT_TAG_RE = re.compile(r"</?\s*transcript(_part)?\s*>", re.IGNORECASE)
-
-
-def make_digest(llm: LLM, episode: Episode, transcript: Transcript, minutes: int = 5) -> Digest:
-    notes = extract_notes(llm, episode, transcript.text)
-    script = write_script(llm, episode, notes, minutes)
-    return Digest(notes_markdown=notes, script=script)
 
 
 def extract_notes(llm: LLM, episode: Episode, text: str) -> str:
@@ -38,13 +32,35 @@ def extract_notes(llm: LLM, episode: Episode, text: str) -> str:
     )
 
 
-def write_script(llm: LLM, episode: Episode, notes: str, minutes: int) -> str:
+def write_script(
+    llm: LLM, episode: Episode, notes: str, minutes: int,
+    language: Language = LANGUAGES["en"], style: str = "auto",
+) -> str:
     return llm.complete(
-        prompts.SCRIPT_SYSTEM,
+        prompts.SCRIPT_SYSTEM.format(writing_rules=language.writing_rules),
         prompts.SCRIPT_USER.format(
-            words=minutes * WORDS_PER_MINUTE, minutes=minutes,
+            length=minutes * language.units_per_minute, unit=language.unit, minutes=minutes,
             episode=episode.title, podcast=episode.podcast_title, notes=notes,
+            style_rules=prompts.STYLE_RULES[style],
+            credit_line=language.credit_line.format(podcast=episode.podcast_title),
         ),
+    )
+
+
+def translate_notes(llm: LLM, episode: Episode, notes: str, language: Language) -> str:
+    return llm.complete(
+        prompts.TRANSLATE_NOTES_SYSTEM.format(writing_rules=language.writing_rules),
+        prompts.TRANSLATE_NOTES_USER.format(podcast=episode.podcast_title, episode=episode.title, notes=notes),
+    )
+
+
+def social_post(llm: LLM, episode: Episode, notes: str, style: str = "auto") -> dict:
+    tone = "professional and precise" if style == "professional" else "warm, relatable and practical"
+    return llm.complete_json(
+        prompts.SOCIAL_SYSTEM,
+        prompts.SOCIAL_USER.format(podcast=episode.podcast_title, episode=episode.title, tone=tone, notes=notes),
+        name="social_post",
+        schema=prompts.SOCIAL_SCHEMA,
     )
 
 

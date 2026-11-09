@@ -4,7 +4,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from . import discovery, pipeline
+from . import discovery, pipeline, publish, storage
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -24,6 +24,12 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument("--episode", type=int, default=0, help="Index in the feed (0 = latest)")
     run.add_argument("--title-contains", help="Pick the first episode whose title contains this")
     run.add_argument("--minutes", type=int, default=5)
+    run.add_argument("--language", default="en", help="Comma-separated output languages, e.g. en,zh")
+    run.add_argument("--style", choices=pipeline.STYLES, default="auto",
+                     help="Digest opening: hook (relatable question), professional, or auto")
+    run.add_argument("--no-social", action="store_true", help="Skip Xiaohongshu/Bilibili posts and cards")
+    run.add_argument("--no-video", action="store_true", help="Skip the MP4 (cover + narration + subtitles)")
+    run.add_argument("--publish", action="store_true", help="Upload shareable outputs (see `publish`)")
     run.add_argument("--output-dir", type=Path, default=Path("output"))
     run.add_argument(
         "--transcript-sources", default="published,local-whisper",
@@ -38,6 +44,15 @@ def main(argv: list[str] | None = None) -> None:
         "--force", action="store_true",
         help="Recompute transcript, notes, script and digest (downloaded audio and chunks are reused)",
     )
+
+    pub = sub.add_parser(
+        "publish",
+        help="Upload digests, notes, posts, cards and videos (never transcripts) to storage",
+        description="Storage is configured with env vars: PD_STORAGE=local|s3, PD_LOCAL_ROOT, "
+                    "PD_S3_BUCKET, PD_S3_PREFIX, PD_S3_ENDPOINT_URL, PD_PUBLIC_BASE_URL. "
+                    "S3 credentials come from the standard AWS environment/profile.",
+    )
+    pub.add_argument("episode_dirs", nargs="+", type=Path, help="output/<podcast>/<episode> directories")
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -60,6 +75,10 @@ def main(argv: list[str] | None = None) -> None:
             output_dir=args.output_dir,
             minutes=args.minutes,
             transcript_sources=[s.strip() for s in args.transcript_sources.split(",") if s.strip()],
+            languages=[s.strip() for s in args.language.split(",") if s.strip()],
+            style=args.style,
+            social=not args.no_social,
+            video=not args.no_video,
             whisper_model=args.whisper_model,
             llm_model=args.llm_model,
             tts_model=args.tts_model,
@@ -68,8 +87,20 @@ def main(argv: list[str] | None = None) -> None:
             force=args.force,
         )
         result = pipeline.run(episode, config)
-        print(f"\nDigest ready: {result.digest_audio} ({result.meta['digest_seconds']}s)")
-        print(f"Notes: {result.notes}\nScript: {result.script}")
+        print(f"\nOutputs in {result.workdir}:")
+        for name, path in result.outputs.items():
+            print(f"  {name:<22} {path.name}")
+        if args.publish:
+            _publish([result.workdir])
+    elif args.command == "publish":
+        _publish(args.episode_dirs)
+
+
+def _publish(workdirs: list[Path]) -> None:
+    target = storage.storage_from_env()
+    for workdir in workdirs:
+        manifest = publish.publish_episode(workdir, target)
+        print(f"Published {len(manifest['files'])} files to {target.name}\n  manifest: {manifest['manifest_url']}")
 
 
 if __name__ == "__main__":

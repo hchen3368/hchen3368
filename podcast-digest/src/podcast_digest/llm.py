@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Protocol
 
 
@@ -7,6 +8,8 @@ class LLM(Protocol):
     name: str
 
     def complete(self, system: str, user: str) -> str: ...
+
+    def complete_json(self, system: str, user: str, name: str, schema: dict) -> dict: ...
 
 
 class OpenAILLM:
@@ -25,7 +28,14 @@ class OpenAILLM:
         return self._client
 
     def complete(self, system: str, user: str) -> str:
-        kwargs = {"model": self.model, "instructions": system, "input": user}
+        return self._create(system, user)
+
+    def complete_json(self, system: str, user: str, name: str, schema: dict) -> dict:
+        text_format = {"format": {"type": "json_schema", "name": name, "schema": schema, "strict": True}}
+        return json.loads(self._create(system, user, text=text_format))
+
+    def _create(self, system: str, user: str, **extra) -> str:
+        kwargs = {"model": self.model, "instructions": system, "input": user, **extra}
         if self.reasoning_effort and is_reasoning_model(self.model):
             kwargs["reasoning"] = {"effort": self.reasoning_effort}
         response = self.client.responses.create(**kwargs)

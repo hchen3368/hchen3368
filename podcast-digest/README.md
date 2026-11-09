@@ -4,6 +4,8 @@ Turn a long podcast episode into a short audio digest you can listen to (and sha
 
 ```
 discover (iTunes / RSS) → transcript → notes → script → speech (MP3)
+                                        ↘ Chinese script → Mandarin MP3 + subtitles → Bilibili MP4
+                                        ↘ Xiaohongshu post + image cards → publish to storage
 ```
 
 The transcript step tries the cheapest source first:
@@ -18,11 +20,12 @@ script written for the ear. Speech uses `gpt-4o-mini-tts`; parts are joined and 
 
 ## Setup
 
-Requires Python 3.10+ and `ffmpeg`.
+Requires Python 3.10+, `ffmpeg` (with libass) and, for Chinese cards/subtitles, a CJK font
+(`apt install fonts-noto-cjk`).
 
 ```bash
 python -m venv .venv && . .venv/bin/activate
-pip install -e '.[local-whisper,dev]'
+pip install -e '.[local-whisper,social,storage,dev]'
 export OPENAI_API_KEY=sk-...        # never commit this
 ```
 
@@ -31,26 +34,75 @@ export OPENAI_API_KEY=sk-...        # never commit this
 ```bash
 podcast-digest search "huberman lab"
 podcast-digest episodes "https://lexfridman.com/feed/podcast/" --limit 5   # [transcript] = free transcript available
-podcast-digest run "https://lexfridman.com/feed/podcast/" --episode 0 --minutes 5
-podcast-digest run "huberman lab" --title-contains "Cold & Heat" --minutes 5
+podcast-digest run "https://lexfridman.com/feed/podcast/" --episode 0 --language en,zh --style professional
+podcast-digest run "huberman lab" --title-contains "Cold & Heat" --language zh --style auto --publish
 ```
 
-`podcast` can be an RSS URL or a search term (first iTunes match). Outputs land in
-`output/<podcast>/<episode>/`:
+`podcast` can be an RSS URL or a search term (first iTunes match).
+
+| Option | Effect |
+|---|---|
+| `--language en,zh` | Output languages. Chinese gets a natural spoken script, Mandarin narration and subtitles. |
+| `--style auto\|hook\|professional` | How the digest opens. `hook` starts with a question tied to the listener's life; `professional` stays formal; `auto` lets the model pick by topic (default). |
+| `--no-social` | Skip the Xiaohongshu / Bilibili posts and image cards (generated for `zh`). |
+| `--no-video` | Skip the MP4 (cover frame + narration + burned-in subtitles). |
+| `--publish` | Upload the shareable outputs after the run (see Storage). |
+| `--minutes`, `--llm-model`, `--voice`, `--keep-audio`, `--force` | Length, models, voice, keep downloaded audio, recompute everything. |
+
+Outputs land in `output/<podcast>/<episode>/`:
 
 | File | Content |
 |---|---|
-| `transcript.txt` | Full transcript |
-| `notes.md` | Structured notes (gist, key ideas, takeaways, quotes) |
-| `script.txt` | Narration script |
-| `digest.mp3` | The audio digest |
-| `meta.json` | Sources, models, word counts, timings |
-| `stamps.json` | Inputs that produced each cached output |
+| `transcript.txt` | Full transcript (never published) |
+| `notes.md`, `notes.zh.md` | Structured notes (gist, key ideas, takeaways, quotes), English and translated |
+| `script.<lang>.txt` | Narration script |
+| `digest.<lang>.mp3` | The audio digest |
+| `subtitles.<lang>.srt` | Subtitles timed to the narration |
+| `video.<lang>.mp4` | 1920×1080 video for Bilibili: cover frame, narration, burned-in subtitles |
+| `post.xhs.zh.md` + `cards_zh/*.png` | Xiaohongshu post: title, body, hashtags and 3:4 image cards in upload order |
+| `post.bilibili.zh.md` | Bilibili title, description and tags |
+| `meta.json`, `stamps.json` | Sources, models, timings; inputs that produced each cached output |
 
-Each stage is cached and stamped with the inputs that produced it (model, voice, prompts, length),
-so rerunning skips finished stages but recomputes any stage whose inputs changed. `--force`
-recomputes everything. Downloaded episode audio is deleted once a transcript exists unless you
-pass `--keep-audio`.
+Each stage is cached and stamped with the inputs that produced it (model, voice, prompts, length,
+style, language), so rerunning skips finished stages but recomputes any stage whose inputs changed.
+`--force` recomputes everything. Downloaded episode audio is deleted once a transcript exists unless
+you pass `--keep-audio`.
+
+## Storage
+
+`publish` uploads digests, notes, posts, cards, subtitles and videos — never transcripts or source
+audio — and maintains a `manifest.json` per episode plus a top-level `index.json`.
+
+```bash
+podcast-digest publish output/huberman-lab/<episode-dir>
+```
+
+Configure with environment variables:
+
+| Variable | Meaning |
+|---|---|
+| `PD_STORAGE` | `local` (default) or `s3` |
+| `PD_LOCAL_ROOT` | Folder for `local` (default `published/`) |
+| `PD_S3_BUCKET`, `PD_S3_PREFIX` | Bucket and optional key prefix |
+| `PD_S3_ENDPOINT_URL` | Needed for non-AWS S3-compatible stores (R2, MinIO, GCS interop) |
+| `PD_PUBLIC_BASE_URL` | Public URL prefix for shareable links in manifests |
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | Bucket credentials (standard AWS variables) |
+
+**Cloudflare R2 (recommended: free egress, 10 GB free):**
+
+1. Cloudflare dashboard → R2 → *Create bucket* (e.g. `podcast-digest`).
+2. Bucket → Settings → *Public access*: enable the `r2.dev` URL (or connect a custom domain).
+3. R2 → *Manage API tokens* → create a token with *Object Read & Write* on that bucket.
+4. Set the variables:
+   ```bash
+   export PD_STORAGE=s3 PD_S3_BUCKET=podcast-digest
+   export PD_S3_ENDPOINT_URL=https://<account-id>.r2.cloudflarestorage.com
+   export PD_PUBLIC_BASE_URL=https://pub-<id>.r2.dev
+   export AWS_ACCESS_KEY_ID=<token key id> AWS_SECRET_ACCESS_KEY=<token secret> AWS_DEFAULT_REGION=auto
+   ```
+
+AWS S3 works the same without `PD_S3_ENDPOINT_URL`. Keep credentials in your shell or CI secrets,
+never in the repo.
 
 Feed content is treated as untrusted: only public http(s) URLs are fetched (redirects re-checked),
 downloads are size- and time-limited, ffmpeg is restricted to local files, and files that look like

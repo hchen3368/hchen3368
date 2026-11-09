@@ -40,12 +40,6 @@ class Transcript:
         return len(self.text.split())
 
 
-@dataclass(frozen=True)
-class Digest:
-    notes_markdown: str
-    script: str
-
-
 def slugify(value: str, max_len: int = 80) -> str:
     value = re.sub(r"[^\w]+", "-", value, flags=re.UNICODE).strip("-_").lower()
     return value[:max_len].rstrip("-_") or "untitled"

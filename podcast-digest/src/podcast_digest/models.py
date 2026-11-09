@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import re
 from dataclasses import dataclass, field
 
@@ -16,6 +17,7 @@ class Episode:
     podcast_title: str
     title: str
     audio_url: str
+    guid: str = ""
     link: str = ""
     published: str = ""
     duration_seconds: int | None = None
@@ -23,8 +25,9 @@ class Episode:
     transcript_urls: tuple[tuple[str, str], ...] = field(default_factory=tuple)
 
     @property
-    def slug(self) -> str:
-        return slugify(self.title)
+    def key(self) -> str:
+        identity = self.guid or self.audio_url
+        return f"{slugify(self.title, 60)}-{hashlib.sha1(identity.encode()).hexdigest()[:8]}"
 
 
 @dataclass(frozen=True)
@@ -44,5 +47,5 @@ class Digest:
 
 
 def slugify(value: str, max_len: int = 80) -> str:
-    value = re.sub(r"[^a-zA-Z0-9]+", "-", value).strip("-").lower()
-    return value[:max_len].rstrip("-") or "untitled"
+    value = re.sub(r"[^\w]+", "-", value, flags=re.UNICODE).strip("-_").lower()
+    return value[:max_len].rstrip("-_") or "untitled"

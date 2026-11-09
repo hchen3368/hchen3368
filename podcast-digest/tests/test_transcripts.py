@@ -1,7 +1,7 @@
 import json
 
 from podcast_digest import transcripts
-from podcast_digest.discovery import TRANSCRIPT_LINK_RE, parse_duration
+from podcast_digest.discovery import find_transcript_links, parse_duration
 
 
 def test_html_speaker_segments_preferred():
@@ -28,9 +28,13 @@ def test_podcast_namespace_json():
     assert transcripts.parse_transcript(raw, "application/json") == "A: Hi\nBye"
 
 
-def test_transcript_link_found_in_show_notes():
-    html = '<p>Links: <a href="https://example.com/ep-1-transcript">Transcript</a></p>'
-    assert TRANSCRIPT_LINK_RE.search(html).group(1) == "https://example.com/ep-1-transcript"
+def test_transcript_links_found_in_show_notes():
+    html = (
+        '<p><a href="https://example.com/t?a=1&amp;b=2"><b>Transcript</b></a> '
+        "<a href='https://example.com/other'>Shop</a> "
+        '<a href="javascript:alert(1)">transcript</a></p>'
+    )
+    assert find_transcript_links(html) == ["https://example.com/t?a=1&b=2"]
 
 
 def test_parse_duration_formats():
@@ -39,3 +43,5 @@ def test_parse_duration_formats():
     assert parse_duration("01:08:19") == 4099
     assert parse_duration("bad") is None
     assert parse_duration(None) is None
+    assert parse_duration("inf") is None
+    assert parse_duration("-5") is None

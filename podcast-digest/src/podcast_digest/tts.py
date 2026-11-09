@@ -68,4 +68,14 @@ def split_text(text: str, max_chars: int = MAX_CHARS_PER_REQUEST) -> list[str]:
             current = f"{current} {sentence}".strip()
     if current:
         chunks.append(current)
-    return chunks
+    return [piece for chunk in chunks for piece in _hard_split(chunk, max_chars)]
+
+
+def _hard_split(text: str, max_chars: int) -> list[str]:
+    pieces = []
+    while len(text) > max_chars:
+        cut = text.rfind(" ", 0, max_chars + 1)
+        cut = cut if cut > 0 else max_chars
+        pieces.append(text[:cut].rstrip())
+        text = text[cut:].lstrip()
+    return pieces + ([text] if text else [])

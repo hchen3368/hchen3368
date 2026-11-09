@@ -3,12 +3,14 @@ from __future__ import annotations
 import json
 import logging
 import re
+from functools import lru_cache
 from pathlib import Path
 from typing import Protocol
 
 from bs4 import BeautifulSoup
 
 from . import audio, http
+from .files import write_text_atomic
 from .models import Episode, Transcript
 
 log = logging.getLogger(__name__)
@@ -52,18 +54,24 @@ class LocalWhisperSource:
         self.compute_type = compute_type
 
     def fetch(self, episode: Episode, workdir: Path) -> Transcript | None:
-        from faster_whisper import WhisperModel
-
         audio_path = audio.ensure_episode_audio(episode, workdir)
-        model = WhisperModel(self.model_size, device="cpu", compute_type=self.compute_type)
-        samples = audio.decode_mono_16k(audio_path)
-        segments, _ = model.transcribe(samples, vad_filter=True, beam_size=1)
-        text = "\n".join(segment.text.strip() for segment in segments)
-        return Transcript(text=text, source=f"{self.name}:{self.model_size}")
+        model = _whisper_model(self.model_size, self.compute_type)
+        lines = []
+        for window in audio.iter_pcm_windows(audio_path):
+            segments, _ = model.transcribe(window, vad_filter=True, beam_size=1)
+            lines.extend(segment.text.strip() for segment in segments)
+        return Transcript(text="\n".join(lines), source=f"{self.name}:{self.model_size}")
+
+
+@lru_cache(maxsize=2)
+def _whisper_model(model_size: str, compute_type: str):
+    from faster_whisper import WhisperModel
+
+    return WhisperModel(model_size, device="cpu", compute_type=compute_type)
 
 
 class OpenAITranscribeSource:
-    """Transcribes with the OpenAI API, splitting audio under the upload size limit."""
+    """Transcribes with the OpenAI API in 5-minute chunks; finished chunks are cached."""
 
     name = "openai-transcribe"
 
@@ -78,9 +86,12 @@ class OpenAITranscribeSource:
         audio_path = audio.ensure_episode_audio(episode, workdir)
         parts = []
         for chunk in audio.split_for_upload(audio_path, workdir / "chunks"):
-            with chunk.open("rb") as fh:
-                result = client.audio.transcriptions.create(model=self.model, file=fh)
-            parts.append(result.text.strip())
+            cached = chunk.with_name(f"{chunk.stem}.{self.model}.txt")
+            if not cached.exists():
+                with chunk.open("rb") as fh:
+                    result = client.audio.transcriptions.create(model=self.model, file=fh)
+                write_text_atomic(cached, result.text.strip())
+            parts.append(cached.read_text())
         return Transcript(text="\n".join(parts), source=f"{self.name}:{self.model}")
 
 
@@ -91,11 +102,15 @@ def get_transcript(episode: Episode, workdir: Path, sources: list[TranscriptSour
         return Transcript(text=data["text"], source=data["source"])
     for source in sources:
         log.info("Trying transcript source: %s", source.name)
-        transcript = source.fetch(episode, workdir)
+        try:
+            transcript = source.fetch(episode, workdir)
+        except Exception as exc:
+            log.warning("Transcript source %s failed: %s", source.name, exc)
+            continue
         if transcript and transcript.text.strip():
             workdir.mkdir(parents=True, exist_ok=True)
-            cache.write_text(json.dumps({"source": transcript.source, "text": transcript.text}))
-            (workdir / "transcript.txt").write_text(transcript.text)
+            write_text_atomic(workdir / "transcript.txt", transcript.text)
+            write_text_atomic(cache, json.dumps({"source": transcript.source, "text": transcript.text}))
             return transcript
     raise RuntimeError(f"No transcript source succeeded for {episode.title!r}")
 

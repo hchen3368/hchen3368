@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-import re
+import math
 
 import feedparser
+from bs4 import BeautifulSoup
 
 from . import http
 from .models import Episode, Podcast
 
 ITUNES_SEARCH_URL = "https://itunes.apple.com/search"
-TRANSCRIPT_LINK_RE = re.compile(r'href="(https?://[^"]+)"[^>]*>[^<]*transcript', re.IGNORECASE)
+AUDIO_EXTENSIONS = (".mp3", ".m4a", ".aac", ".ogg", ".opus", ".wav", ".flac")
 
 
 def search_podcasts(term: str, limit: int = 5) -> list[Podcast]:
@@ -32,7 +33,7 @@ def resolve_feed_url(feed_or_term: str) -> str:
 
 
 def list_episodes(feed_url: str, limit: int | None = None) -> list[Episode]:
-    parsed = feedparser.parse(http.get_text(feed_url))
+    parsed = feedparser.parse(http.get_bytes(feed_url))
     podcast_title = parsed.feed.get("title", "")
     entries = parsed.entries[:limit] if limit else parsed.entries
     return [ep for ep in (_to_episode(podcast_title, e) for e in entries) if ep]
@@ -45,14 +46,13 @@ def select_episode(episodes: list[Episode], index: int = 0, title_contains: str 
             if needle in episode.title.lower():
                 return episode
         raise LookupError(f"No episode title contains {title_contains!r}")
+    if not 0 <= index < len(episodes):
+        raise LookupError(f"Episode index {index} out of range (feed has {len(episodes)} episodes)")
     return episodes[index]
 
 
 def _to_episode(podcast_title: str, entry) -> Episode | None:
-    audio_url = next(
-        (enc.get("href") for enc in entry.get("enclosures", []) if enc.get("type", "").startswith("audio")),
-        None,
-    )
+    audio_url = _audio_url(entry)
     if not audio_url:
         return None
     description = _description_html(entry)
@@ -60,12 +60,24 @@ def _to_episode(podcast_title: str, entry) -> Episode | None:
         podcast_title=podcast_title,
         title=entry.get("title", "untitled"),
         audio_url=audio_url,
+        guid=entry.get("id", ""),
         link=entry.get("link", ""),
         published=entry.get("published", ""),
         duration_seconds=parse_duration(entry.get("itunes_duration")),
         description_html=description,
         transcript_urls=tuple(_transcript_urls(entry, description)),
     )
+
+
+def _audio_url(entry) -> str | None:
+    enclosures = [e for e in entry.get("enclosures", []) if e.get("href")]
+    for enclosure in enclosures:
+        if enclosure.get("type", "").startswith("audio"):
+            return enclosure["href"]
+    for enclosure in enclosures:
+        if enclosure["href"].lower().split("?")[0].endswith(AUDIO_EXTENSIONS):
+            return enclosure["href"]
+    return None
 
 
 def _description_html(entry) -> str:
@@ -78,20 +90,31 @@ def _transcript_urls(entry, description_html: str) -> list[tuple[str, str]]:
     tag = entry.get("podcast_transcript")
     if isinstance(tag, dict) and tag.get("url"):
         urls.append((tag["url"], tag.get("type", "")))
-    for match in TRANSCRIPT_LINK_RE.finditer(description_html):
-        urls.append((match.group(1), "text/html"))
+    urls.extend((href, "text/html") for href in find_transcript_links(description_html))
     seen: set[str] = set()
     return [u for u in urls if not (u[0] in seen or seen.add(u[0]))]
+
+
+def find_transcript_links(html: str) -> list[str]:
+    soup = BeautifulSoup(html, "html.parser")
+    return [
+        a["href"]
+        for a in soup.find_all("a", href=True)
+        if "transcript" in a.get_text(" ", strip=True).lower()
+        and a["href"].startswith(("http://", "https://"))
+    ]
 
 
 def parse_duration(value: str | None) -> int | None:
     if not value:
         return None
     try:
-        parts = [int(float(p)) for p in str(value).split(":")]
+        parts = [float(p) for p in str(value).split(":")]
     except ValueError:
+        return None
+    if not parts or any(math.isnan(p) or math.isinf(p) or p < 0 for p in parts):
         return None
     seconds = 0
     for part in parts:
-        seconds = seconds * 60 + part
+        seconds = seconds * 60 + int(part)
     return seconds

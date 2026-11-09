@@ -33,7 +33,11 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument("--llm-model", default="gpt-5.4-mini")
     run.add_argument("--tts-model", default="gpt-4o-mini-tts")
     run.add_argument("--voice", default="alloy")
-    run.add_argument("--force", action="store_true", help="Recompute every stage")
+    run.add_argument("--keep-audio", action="store_true", help="Keep the downloaded episode audio")
+    run.add_argument(
+        "--force", action="store_true",
+        help="Recompute transcript, notes, script and digest (downloaded audio and chunks are reused)",
+    )
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -60,6 +64,7 @@ def main(argv: list[str] | None = None) -> None:
             llm_model=args.llm_model,
             tts_model=args.tts_model,
             tts_voice=args.voice,
+            keep_audio=args.keep_audio,
             force=args.force,
         )
         result = pipeline.run(episode, config)

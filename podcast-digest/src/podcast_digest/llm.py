@@ -26,10 +26,16 @@ class OpenAILLM:
 
     def complete(self, system: str, user: str) -> str:
         kwargs = {"model": self.model, "instructions": system, "input": user}
-        if self.reasoning_effort:
+        if self.reasoning_effort and is_reasoning_model(self.model):
             kwargs["reasoning"] = {"effort": self.reasoning_effort}
         response = self.client.responses.create(**kwargs)
+        if response.status != "completed":
+            raise RuntimeError(f"{self.name} response {response.status}: {response.incomplete_details}")
         text = response.output_text.strip()
         if not text:
-            raise RuntimeError(f"{self.name} returned an empty response (status={response.status})")
+            raise RuntimeError(f"{self.name} returned an empty response")
         return text
+
+
+def is_reasoning_model(model: str) -> bool:
+    return model.startswith(("gpt-5", "o1", "o3", "o4"))

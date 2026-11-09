@@ -45,8 +45,16 @@ podcast-digest run "huberman lab" --title-contains "Cold & Heat" --minutes 5
 | `script.txt` | Narration script |
 | `digest.mp3` | The audio digest |
 | `meta.json` | Sources, models, word counts, timings |
+| `stamps.json` | Inputs that produced each cached output |
 
-Each stage is cached; rerunning skips finished stages. Use `--force` to recompute.
+Each stage is cached and stamped with the inputs that produced it (model, voice, prompts, length),
+so rerunning skips finished stages but recomputes any stage whose inputs changed. `--force`
+recomputes everything. Downloaded episode audio is deleted once a transcript exists unless you
+pass `--keep-audio`.
+
+Feed content is treated as untrusted: only public http(s) URLs are fetched (redirects re-checked),
+downloads are size- and time-limited, ffmpeg is restricted to local files, and files that look like
+playlists rather than audio are rejected.
 
 Useful options: `--transcript-sources published,openai-transcribe`, `--whisper-model small.en`,
 `--llm-model gpt-5.4`, `--voice nova`.

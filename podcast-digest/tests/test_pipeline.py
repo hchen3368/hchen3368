@@ -13,7 +13,7 @@ class FakeLLM:
 
     def complete(self, system: str, user: str) -> str:
         self.calls.append(user)
-        return "## One-line gist\nNotes." if len(self.calls) == 1 else "This is the script. It has two sentences."
+        return "## One-line gist\nNotes." if "<transcript>" in user else "This is the script. It has two sentences."
 
 
 class FakeTTS:
@@ -55,6 +55,27 @@ def test_pipeline_end_to_end_and_caches(tmp_path, monkeypatch):
     pipeline.run(episode, config, llm=llm, tts_engine=FakeTTS())
     assert source.calls == 1
     assert len(llm.calls) == 2
+
+    config.minutes = 8
+    pipeline.run(episode, config, llm=llm, tts_engine=FakeTTS())
+    assert len(llm.calls) == 3
+    assert "~1200-word" in llm.calls[-1]
+
+
+class BrokenSource:
+    name = "broken"
+
+    def fetch(self, episode, workdir):
+        raise RuntimeError("boom")
+
+
+def test_failing_source_falls_through_to_next(tmp_path, monkeypatch):
+    good = FakeSource()
+    monkeypatch.setattr(pipeline, "build_transcript_sources", lambda config: [BrokenSource(), good])
+    episode = Episode(podcast_title="Show", title="Ep 2", audio_url="https://example.com/b.mp3")
+    result = pipeline.run(episode, pipeline.Config(output_dir=tmp_path), llm=FakeLLM(), tts_engine=FakeTTS())
+    assert good.calls == 1
+    assert result.meta["transcript_source"] == "fake"
 
 
 def test_split_text_respects_limit():

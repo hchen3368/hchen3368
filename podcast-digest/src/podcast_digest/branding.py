@@ -11,8 +11,8 @@ class Brand:
 
 
 DEFAULT_BRANDS = {
-    "zh": Brand(name="长话短听", tagline="把好播客，浓缩成三分钟。"),
-    "en": Brand(name="The Short Listen", tagline="Great podcasts, boiled down to three minutes."),
+    "zh": Brand(name="长话短听", tagline="与最优秀的思想并肩。"),
+    "en": Brand(name="The Short Listen", tagline="Keep company with the best minds."),
 }
 INTRO_TEMPLATES = {
     "zh": "{tagline}这里是{name}。",

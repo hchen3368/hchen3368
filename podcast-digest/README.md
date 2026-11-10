@@ -72,6 +72,30 @@ style, language), so rerunning skips finished stages but recomputes any stage wh
 `--force` recomputes everything. Downloaded episode audio is deleted once a transcript exists unless
 you pass `--keep-audio`.
 
+## Upload to Bilibili (on your own computer)
+
+Uses the open-source [biliup](https://github.com/biliup/biliup) uploader (unofficial; for personal use).
+Run it on your own computer so the login cookie never leaves it.
+
+```bash
+pip install -e '.[bilibili]'
+podcast-digest bilibili-login          # scan the QR code with the Bilibili app (once; cookie saved to
+                                       # ~/.config/podcast-digest/bilibili_cookies.json, chmod 600)
+podcast-digest bilibili-upload output/<podcast>/<episode> --dry-run   # preview title, description, tags
+podcast-digest bilibili-upload output/<podcast>/<episode>             # upload now
+podcast-digest bilibili-upload output/<podcast>/<episode> --schedule "2026-11-12 20:00"
+```
+
+- Uploads `video.zh.mp4` with `frame.zh.png` as cover, title/description/tags from `post.zh.json`,
+  type 自制, default category `--tid 201` (科学科普). The description always ends with the original
+  episode's name and link and an "AI 辅助整理" note.
+- `bilibili.json` in the episode folder records the upload; uploading again needs `--force`.
+- After uploading, tick "作品含 AI 生成内容" in 创作中心 if Bilibili asks for it.
+- The episode folder must be on your computer: run the pipeline there (set `OPENAI_API_KEY` and
+  `MINIMAX_API_KEY`), or copy the folder over.
+- Never commit or share `bilibili_cookies.json`; anyone with it can post as you. `bilibili-login`
+  again refreshes it; delete it to log out.
+
 ## Storage
 
 `publish` uploads digests, notes, posts, cards, subtitles and videos — never transcripts or source

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import argparse
+import json
+from datetime import datetime
 import logging
 from pathlib import Path
 
-from . import discovery, pipeline, publish, storage, tts
+from . import bilibili, discovery, pipeline, publish, storage, tts
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -54,6 +56,17 @@ def main(argv: list[str] | None = None) -> None:
 
     voices = sub.add_parser("voices", help="List system voices of a TTS provider (MiniMax)")
     voices.add_argument("--filter", default="", help="Only voices whose id or name contains this")
+
+    bl = sub.add_parser("bilibili-login", help="Log in to Bilibili by scanning a QR code (run on your computer)")
+    bl.add_argument("--cookies", type=Path, default=bilibili.DEFAULT_COOKIE_FILE)
+
+    bu = sub.add_parser("bilibili-upload", help="Upload an episode's Chinese video to Bilibili as 自制")
+    bu.add_argument("episode_dir", type=Path, help="output/<podcast>/<episode> directory")
+    bu.add_argument("--cookies", type=Path, default=bilibili.DEFAULT_COOKIE_FILE)
+    bu.add_argument("--tid", type=int, default=bilibili.DEFAULT_TID, help="Bilibili category id (default 201 科学科普)")
+    bu.add_argument("--schedule", help='Publish later, local time "YYYY-MM-DD HH:MM" (2 hours to 15 days ahead)')
+    bu.add_argument("--dry-run", action="store_true", help="Show what would be submitted without uploading")
+    bu.add_argument("--force", action="store_true", help="Upload again even if already uploaded")
 
     pub = sub.add_parser(
         "publish",
@@ -111,6 +124,15 @@ def main(argv: list[str] | None = None) -> None:
             line = f"{v.get('voice_id')}\t{v.get('voice_name', '')}\t{' '.join(v.get('description') or [])}"
             if args.filter.lower() in line.lower():
                 print(line)
+    elif args.command == "bilibili-login":
+        print(f"Logged in; credentials saved to {bilibili.login(args.cookies)} (keep this file private)")
+    elif args.command == "bilibili-upload":
+        schedule = datetime.strptime(args.schedule, "%Y-%m-%d %H:%M") if args.schedule else None
+        submission = bilibili.upload(args.episode_dir, args.cookies, tid=args.tid, schedule=schedule,
+                                     force=args.force, dry_run=args.dry_run)
+        print(json.dumps(submission, ensure_ascii=False, indent=2))
+        if not args.dry_run:
+            print("已提交投稿。请到 B站创作中心确认，并按需勾选“作品含 AI 生成内容”声明。")
     elif args.command == "publish":
         _publish(args.episode_dirs)
 

@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
+import shutil
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from zoneinfo import ZoneInfo
 
 DEFAULT_COOKIE_FILE = Path.home() / ".config" / "podcast-digest" / "bilibili_cookies.json"
 DEFAULT_TID = 201
@@ -13,6 +15,9 @@ DESC_MAX = 2000
 TAG_MAX = 10
 TAG_LEN_MAX = 20
 RECORD_FILE = "bilibili.json"
+QUEUE_FILES = ("video.{code}.mp4", "frame.{code}.png", "post.{code}.json", "meta.json")
+DEFAULT_PUBLISH_TIME = "20:00"
+DEFAULT_TIMEZONE = "Asia/Shanghai"
 
 
 def _gears():
@@ -90,6 +95,41 @@ def clean_link(url: str) -> str:
     parts = urlsplit(url)
     query = urlencode([(k, v) for k, v in parse_qsl(parts.query) if not k.startswith("utm_")])
     return urlunsplit(parts._replace(query=query))
+
+
+def enqueue(workdir: Path, queue_dir: Path, code: str = "zh") -> Path:
+    """Copies the files an upload needs into the publish queue (committed to git for CI to upload)."""
+    dest = queue_dir / workdir.parent.name / workdir.name
+    dest.mkdir(parents=True, exist_ok=True)
+    for pattern in QUEUE_FILES:
+        name = pattern.format(code=code)
+        source = workdir / name
+        if not source.exists():
+            raise FileNotFoundError(f"{source} not found; generate the episode with video enabled first")
+        shutil.copyfile(source, dest / name)
+    return dest
+
+
+def pending(queue_dir: Path) -> list[Path]:
+    return sorted(p.parent for p in queue_dir.glob("*/*/meta.json") if not (p.parent / RECORD_FILE).exists())
+
+
+def next_publish_time(now: datetime, at: str = DEFAULT_PUBLISH_TIME, tz: str = DEFAULT_TIMEZONE) -> datetime:
+    """Next day's `at` in `tz`: leaves a review window and stays inside Bilibili's 2h-15d range."""
+    local = now.astimezone(ZoneInfo(tz))
+    hour, minute = (int(x) for x in at.split(":"))
+    return (local + timedelta(days=1)).replace(hour=hour, minute=minute, second=0, microsecond=0)
+
+
+def upload_queue(queue_dir: Path, cookie_file: Path, publish_at: str = DEFAULT_PUBLISH_TIME,
+                 tz: str = DEFAULT_TIMEZONE, immediate: bool = False, dry_run: bool = False) -> list[dict]:
+    results = []
+    for workdir in pending(queue_dir):
+        schedule = None if immediate else next_publish_time(datetime.now(timezone.utc), publish_at, tz)
+        submission = upload(workdir, cookie_file, schedule=schedule, dry_run=dry_run)
+        results.append({"episode": str(workdir), "title": submission["title"],
+                        "scheduled_for": schedule.isoformat() if schedule else "now"})
+    return results
 
 
 def _print_qr(url: str) -> None:

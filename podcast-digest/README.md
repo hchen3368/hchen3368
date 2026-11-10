@@ -96,6 +96,33 @@ podcast-digest bilibili-upload output/<podcast>/<episode> --schedule "2026-11-12
 - Never commit or share `bilibili_cookies.json`; anyone with it can post as you. `bilibili-login`
   again refreshes it; delete it to log out.
 
+### Automatic publishing with GitHub Actions
+
+`.github/workflows/bilibili-publish.yml` uploads every episode in `podcast-digest/bilibili-queue/`
+that has not been uploaded yet, whenever that folder changes (or when run by hand from the Actions
+tab). By default each upload is **scheduled for 20:00 Beijing time the next day**, which leaves time
+to review it in 创作中心 and withdraw it if needed. After uploading, the workflow commits each
+episode's `bilibili.json` record so nothing is uploaded twice.
+
+One-time setup:
+
+1. On your Mac: `pip install -e '.[bilibili]'`, then `podcast-digest bilibili-login` and scan the QR code.
+2. Copy the contents of `~/.config/podcast-digest/bilibili_cookies.json` into a repository secret named
+   `BILIBILI_COOKIES` (GitHub → Settings → Secrets and variables → Actions → New repository secret),
+   or run `gh secret set BILIBILI_COOKIES < ~/.config/podcast-digest/bilibili_cookies.json`.
+3. Repeat both steps when the login expires (the workflow then fails with a login error).
+
+Queue episodes and push:
+
+```bash
+podcast-digest bilibili-queue output/<podcast>/<episode>
+git add bilibili-queue && git commit -m "Queue episode" && git push
+```
+
+Run by hand from the Actions tab with `immediate` (publish now) or `dry_run` (preview only).
+Uploads come from GitHub's servers outside China, which Bilibili may treat as an unusual login
+location; if it asks for verification, log in again on your Mac and update the secret.
+
 ## Storage
 
 `publish` uploads digests, notes, posts, cards, subtitles and videos — never transcripts or source

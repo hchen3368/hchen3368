@@ -68,6 +68,19 @@ def main(argv: list[str] | None = None) -> None:
     bu.add_argument("--dry-run", action="store_true", help="Show what would be submitted without uploading")
     bu.add_argument("--force", action="store_true", help="Upload again even if already uploaded")
 
+    bq = sub.add_parser("bilibili-queue", help="Add episodes to the Bilibili publish queue (uploaded by CI)")
+    bq.add_argument("episode_dirs", nargs="+", type=Path)
+    bq.add_argument("--queue", type=Path, default=Path("bilibili-queue"))
+
+    bqu = sub.add_parser("bilibili-upload-queue", help="Upload every queued episode not yet uploaded (used by CI)")
+    bqu.add_argument("--queue", type=Path, default=Path("bilibili-queue"))
+    bqu.add_argument("--cookies", type=Path, default=bilibili.DEFAULT_COOKIE_FILE)
+    bqu.add_argument("--publish-at", default=bilibili.DEFAULT_PUBLISH_TIME,
+                     help="Scheduled publish time next day, HH:MM (default 20:00)")
+    bqu.add_argument("--timezone", default=bilibili.DEFAULT_TIMEZONE)
+    bqu.add_argument("--immediate", action="store_true", help="Publish right away instead of next day")
+    bqu.add_argument("--dry-run", action="store_true")
+
     pub = sub.add_parser(
         "publish",
         help="Upload digests, notes, posts, cards and videos (never transcripts) to storage",
@@ -133,6 +146,13 @@ def main(argv: list[str] | None = None) -> None:
         print(json.dumps(submission, ensure_ascii=False, indent=2))
         if not args.dry_run:
             print("已提交投稿。请到 B站创作中心确认，并按需勾选“作品含 AI 生成内容”声明。")
+    elif args.command == "bilibili-queue":
+        for workdir in args.episode_dirs:
+            print(f"Queued {bilibili.enqueue(workdir, args.queue)}")
+    elif args.command == "bilibili-upload-queue":
+        results = bilibili.upload_queue(args.queue, args.cookies, args.publish_at, args.timezone,
+                                        args.immediate, args.dry_run)
+        print(json.dumps(results, ensure_ascii=False, indent=2) if results else "Nothing to upload")
     elif args.command == "publish":
         _publish(args.episode_dirs)
 

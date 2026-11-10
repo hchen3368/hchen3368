@@ -66,3 +66,26 @@ def test_dry_run_needs_no_login_and_uploads_nothing(episode_dir, fake_gears, tmp
 def test_upload_without_login_explains_next_step(episode_dir, fake_gears, tmp_path):
     with pytest.raises(FileNotFoundError, match="bilibili-login"):
         bilibili.upload(episode_dir, tmp_path / "missing.json")
+
+
+def test_queue_upload_schedules_next_evening_and_skips_done(episode_dir, fake_gears, tmp_path):
+    queue = tmp_path / "queue"
+    queued = bilibili.enqueue(episode_dir, queue)
+    assert sorted(p.name for p in queued.iterdir()) == ["frame.zh.png", "meta.json", "post.zh.json", "video.zh.mp4"]
+    cookies = tmp_path / "cookies.json"
+    cookies.write_text("{}")
+
+    results = bilibili.upload_queue(queue, cookies)
+    assert len(results) == 1 and results[0]["scheduled_for"].endswith("20:00:00+08:00")
+    assert (queued / "bilibili.json").exists()
+    assert bilibili.upload_queue(queue, cookies) == []
+    assert len(fake_gears.calls) == 1
+
+
+def test_next_publish_time_is_next_day_in_beijing():
+    from datetime import timezone
+
+    now = datetime(2026, 11, 10, 15, 30, tzinfo=timezone.utc)
+    when = bilibili.next_publish_time(now)
+    assert when.isoformat() == "2026-11-11T20:00:00+08:00"
+    assert 2 * 3600 <= (when - now).total_seconds() <= 15 * 86400

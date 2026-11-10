@@ -33,7 +33,7 @@ class Config:
     llm_model: str = "gpt-5.4-mini"
     brand_name: str | None = None
     brand_tagline: str | None = None
-    tts_provider: str = "openai"
+    tts_provider: str | None = None
     tts_model: str | None = None
     tts_voice: str | None = None
     keep_audio: bool = False

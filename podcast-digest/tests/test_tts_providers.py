@@ -50,3 +50,8 @@ def test_build_engine_defaults_and_overrides():
     assert tts.build_engine("minimax", zh, voice="v1").name == "minimax:speech-2.8-hd:v1"
     with pytest.raises(ValueError):
         tts.build_engine("nope", zh)
+
+
+def test_default_provider_and_voice_per_language():
+    assert tts.build_engine(None, LANGUAGES["zh"]).name == "minimax:speech-2.8-hd:Chinese (Mandarin)_Warm_Bestie"
+    assert tts.build_engine(None, LANGUAGES["en"]).name == f"openai:{tts.DEFAULT_TTS_MODEL}:alloy"

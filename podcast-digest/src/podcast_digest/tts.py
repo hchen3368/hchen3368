@@ -108,11 +108,14 @@ class MiniMaxTTS:
 
 PROVIDERS = {
     "openai": {"model": DEFAULT_TTS_MODEL, "voices": {"en": "alloy", "zh": "marin"}},
-    "minimax": {"model": "speech-2.8-hd", "voices": {"en": "English_Trustworth_Man", "zh": "Chinese (Mandarin)_Radio_Host"}},
+    "minimax": {"model": "speech-2.8-hd", "voices": {"en": "English_Trustworth_Man", "zh": "Chinese (Mandarin)_Warm_Bestie"}},
 }
+DEFAULT_PROVIDERS = {"zh": "minimax", "en": "openai"}
 
 
-def build_engine(provider: str, language: Language, model: str | None = None, voice: str | None = None) -> TTSEngine:
+def build_engine(provider: str | None, language: Language, model: str | None = None,
+                 voice: str | None = None) -> TTSEngine:
+    provider = provider or DEFAULT_PROVIDERS.get(language.code, "openai")
     if provider not in PROVIDERS:
         raise ValueError(f"Unknown TTS provider {provider!r}; choose from {sorted(PROVIDERS)}")
     defaults = PROVIDERS[provider]

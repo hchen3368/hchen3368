@@ -38,7 +38,8 @@ def main(argv: list[str] | None = None) -> None:
     )
     run.add_argument("--whisper-model", default="base.en")
     run.add_argument("--llm-model", default="gpt-5.4-mini")
-    run.add_argument("--tts-provider", choices=sorted(tts.PROVIDERS), default="openai")
+    run.add_argument("--tts-provider", choices=sorted(tts.PROVIDERS),
+                     help="Speech provider; default per language (zh: minimax, en: openai)")
     run.add_argument("--tts-model", help="TTS model; default per provider")
     run.add_argument("--voice", help="TTS voice; default per provider and language")
     run.add_argument("--brand-name", help="Our channel name for the intro (env PD_BRAND_NAME)")

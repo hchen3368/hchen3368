@@ -45,7 +45,7 @@ podcast-digest run "huberman lab" --title-contains "Cold & Heat" --language zh -
 | `--language en,zh` | Output languages. Chinese gets a natural spoken script, Mandarin narration and subtitles. |
 | `--style auto\|hook\|professional` | How the digest opens. `hook` starts with a question tied to the listener's life; `professional` stays formal; `auto` lets the model pick by topic (default). |
 | `--brand-name`, `--brand-tagline` | Our channel's name and tagline (or `PD_BRAND_NAME` / `PD_BRAND_TAGLINE`). Every digest opens with "<tagline>这里是<name>。" and then "今天我们探讨的内容，来自《<original podcast>》…"; the original show is never presented as ours. Defaults are placeholders (长话短听 / 与最优秀的思想并肩。). |
-| `--tts-provider openai\|minimax`, `--voice`, `--tts-model` | Speech provider. OpenAI defaults: `gpt-4o-mini-tts-2025-12-15`, voice `marin` (zh) / `alloy` (en). MiniMax (international, `api.minimax.io`, key in `MINIMAX_API_KEY`) defaults: `speech-2.8-hd`, voice `Chinese (Mandarin)_Radio_Host`. `podcast-digest voices --filter Mandarin` lists MiniMax voices. |
+| `--tts-provider openai\|minimax`, `--voice`, `--tts-model` | Speech provider; defaults to MiniMax for `zh` and OpenAI for `en`. MiniMax (international, `api.minimax.io`, key in `MINIMAX_API_KEY`): `speech-2.8-hd`, voice `Chinese (Mandarin)_Warm_Bestie`. OpenAI: `gpt-4o-mini-tts-2025-12-15`, voice `alloy` (en) / `marin` (zh). `podcast-digest voices --filter Mandarin` lists MiniMax voices. |
 | `--no-social` | Skip the Xiaohongshu / Bilibili posts and image cards (generated for `zh`). |
 | `--no-video` | Skip the MP4 (cover frame + narration + burned-in subtitles). |
 | `--publish` | Upload the shareable outputs after the run (see Storage). |

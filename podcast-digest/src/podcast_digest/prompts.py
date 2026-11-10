@@ -160,7 +160,9 @@ If the topic touches health, medicine or money, include a one-line disclaimer
 You post for our own channel, which summarizes other people's podcasts; never imply you are the
 original podcast or its host.
 Introduce guests with a short descriptor from the notes' Guests section (e.g. MIT 理论计算机科学家),
-and never add titles, affiliations or awards the notes do not state."""
+and never add titles, affiliations or awards the notes do not state.
+Refer to people by their established Chinese name if they have one (e.g. 黄仁勋, 马斯克), otherwise
+by a Chinese transliteration of the surname; keep English names only in the source credit."""
 
 SOCIAL_USER = """Our channel: {brand}
 Podcast: {podcast}
@@ -180,7 +182,12 @@ Xiaohongshu rules:
 - tags: 5-8 hashtags without the # sign.
 
 Bilibili rules:
-- bilibili_title: at most 40 characters, informative, include the guest or topic.
+- bilibili_title: at most 40 characters, written to make viewers click while staying accurate.
+  Lead with the big topic or stakes the audience cares about, then a dash and the angle or
+  contrast, e.g. "2026 AI 前沿版图 - 中美AI发展对比", "AI 攻克千禧难题 - 数学家还剩什么",
+  "英伟达为何是 AI 时代的发动机 - 黄仁勋谈算力与未来". Prefer the topic over guest names; a very
+  famous guest (e.g. 黄仁勋, 马斯克) may appear. No English personal names, no podcast name or
+  episode number, no exaggeration the notes do not support.
 - bilibili_description: 150-300 characters: what the video covers, 3-5 timestamped-free highlights,
   source credit, and a note that this is an AI-assisted summary of the original episode.
 - bilibili_tags: 5-10 tags.

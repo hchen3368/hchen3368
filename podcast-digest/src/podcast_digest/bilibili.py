@@ -8,6 +8,8 @@ from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from zoneinfo import ZoneInfo
 
+from . import branding
+
 DEFAULT_COOKIE_FILE = Path.home() / ".config" / "podcast-digest" / "bilibili_cookies.json"
 DEFAULT_TID = 201
 TITLE_MAX = 80
@@ -43,6 +45,7 @@ def login(cookie_file: Path = DEFAULT_COOKIE_FILE) -> Path:
 
 
 def build_submission(workdir: Path, code: str = "zh", tid: int = DEFAULT_TID) -> dict:
+    brand = branding.brand_for(code).name
     meta = json.loads((workdir / "meta.json").read_text())
     post = json.loads((workdir / f"post.{code}.json").read_text())
     episode = meta["episode"]
@@ -51,9 +54,9 @@ def build_submission(workdir: Path, code: str = "zh", tid: int = DEFAULT_TID) ->
     if not video.exists():
         raise FileNotFoundError(f"{video} not found; run the pipeline with video enabled first")
     footer = (
-        f"\n\n原节目：{episode['podcast_title']}《{episode['title']}》"
-        + (f"\n{clean_link(episode['link'])}" if episode.get("link") else "")
-        + "\n本视频为 AI 辅助整理的中文摘要，观点归原嘉宾所有，完整内容请收听原节目。"
+        f"\n\n【原出处】{episode['podcast_title']}《{episode['title']}》"
+        + (f"\n原节目链接：{clean_link(episode['link'])}" if episode.get("link") else "")
+        + f"\n本视频由{brand}基于原节目内容进行 AI 辅助中文整理，观点归原嘉宾所有，完整内容请收听原节目。"
     )
     desc = post["bilibili_description"].strip()
     desc = desc[: DESC_MAX - len(footer)] + footer

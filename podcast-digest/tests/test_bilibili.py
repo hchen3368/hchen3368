@@ -36,7 +36,8 @@ def test_submission_is_self_made_with_credit_and_clean_fields(episode_dir):
     sub = bilibili.build_submission(episode_dir)
     assert sub["copyright"] == 1 and sub["tid"] == 201
     assert len(sub["title"]) == bilibili.TITLE_MAX
-    assert sub["desc"].startswith("简介内容") and "原节目：Show《Ep 1》" in sub["desc"]
+    assert sub["desc"].startswith("简介内容") and "【原出处】Show《Ep 1》" in sub["desc"]
+    assert "原节目链接：https://example.com/ep1/?id=7" in sub["desc"] and "AI 辅助中文整理" in sub["desc"]
     assert "https://example.com/ep1/?id=7" in sub["desc"] and "utm_" not in sub["desc"]
     tags = sub["tag"].split(",")
     assert tags[:2] == ["AI", "科普"] and len(tags) <= bilibili.TAG_MAX

@@ -81,6 +81,9 @@ def main(argv: list[str] | None = None) -> None:
     bqu.add_argument("--immediate", action="store_true", help="Publish right away instead of next day")
     bqu.add_argument("--dry-run", action="store_true")
 
+    bs = sub.add_parser("bilibili-status", help="List your recent Bilibili submissions and their review state")
+    bs.add_argument("--cookies", type=Path, default=bilibili.DEFAULT_COOKIE_FILE)
+
     pub = sub.add_parser(
         "publish",
         help="Upload digests, notes, posts, cards and videos (never transcripts) to storage",
@@ -153,6 +156,9 @@ def main(argv: list[str] | None = None) -> None:
         results = bilibili.upload_queue(args.queue, args.cookies, args.publish_at, args.timezone,
                                         args.immediate, args.dry_run)
         print(json.dumps(results, ensure_ascii=False, indent=2) if results else "Nothing to upload")
+    elif args.command == "bilibili-status":
+        rows = bilibili.list_archives(args.cookies)
+        print(json.dumps(rows, ensure_ascii=False, indent=2) if rows else "No submissions found")
     elif args.command == "publish":
         _publish(args.episode_dirs)
 

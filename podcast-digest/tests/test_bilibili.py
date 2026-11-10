@@ -105,3 +105,26 @@ def test_cli_starts_without_optional_dependencies():
     result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
     assert "bilibili-upload" in result.stdout
+
+
+def test_list_archives_reads_nested_cookies_and_parses_states(tmp_path):
+    cookie_file = tmp_path / "c.json"
+    cookie_file.write_text(json.dumps({"cookie_info": {"cookies": [
+        {"name": "SESSDATA", "value": "s"}, {"name": "bili_jct", "value": "j"}]}, "token_info": {"mid": 1}}))
+    assert bilibili.web_cookies(cookie_file) == {"SESSDATA": "s", "bili_jct": "j"}
+
+    class Resp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"code": 0, "data": {"arc_audits": [{"Archive": {
+                "bvid": "BV1x", "title": "t", "state": -40, "state_desc": "定时发布", "dtime": 1}}]}}
+
+    class Session:
+        def get(self, url, params, cookies, headers, timeout):
+            assert cookies["SESSDATA"] == "s" and "is_pubing" in params["status"]
+            return Resp()
+
+    rows = bilibili.list_archives(cookie_file, session=Session())
+    assert rows[0]["bvid"] == "BV1x" and rows[0]["state_desc"] == "定时发布"

@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "podcast-digest/bilibili-queue/**"
+      - "podcast-digest/bilibili-requests/**"
   workflow_dispatch:
     inputs:
       immediate:
@@ -56,6 +57,11 @@ jobs:
           --cookies "$RUNNER_TEMP/bilibili_cookies.json"
           ${{ inputs.immediate && '--immediate' || '' }}
           ${{ inputs.dry_run && '--dry-run' || '' }}
+
+      - name: Show submissions on the account
+        if: ${{ always() }}
+        continue-on-error: true
+        run: podcast-digest bilibili-status --cookies "$RUNNER_TEMP/bilibili_cookies.json"
 
       - name: Record uploads
         if: ${{ always() && !inputs.dry_run }}

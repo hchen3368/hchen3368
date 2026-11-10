@@ -135,6 +135,57 @@ def upload_queue(queue_dir: Path, cookie_file: Path, publish_at: str = DEFAULT_P
     return results
 
 
+ARCHIVES_URL = "https://member.bilibili.com/x/web/archives"
+
+
+def web_cookies(cookie_file: Path) -> dict[str, str]:
+    """Pulls name/value cookie pairs out of biliup's login file, whatever its nesting."""
+    found: dict[str, str] = {}
+
+    def walk(node):
+        if isinstance(node, dict):
+            if isinstance(node.get("name"), str) and "value" in node:
+                found[node["name"]] = str(node["value"])
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item)
+
+    walk(json.loads(cookie_file.read_text()))
+    return found
+
+
+def list_archives(cookie_file: Path, session=None) -> list[dict]:
+    """Read-only: the account's recent submissions with review / schedule state."""
+    import requests
+
+    session = session or requests.Session()
+    cookies = web_cookies(cookie_file)
+    if "SESSDATA" not in cookies:
+        raise RuntimeError("No SESSDATA cookie in the login file; run bilibili-login again")
+    response = session.get(
+        ARCHIVES_URL,
+        params={"status": "is_pubing,pubed,not_pubed", "pn": 1, "ps": 20},
+        cookies=cookies,
+        headers={"User-Agent": "podcast-digest/0.1 (biliup)", "Referer": "https://member.bilibili.com/"},
+        timeout=30,
+    )
+    response.raise_for_status()
+    data = response.json()
+    if data.get("code") != 0:
+        raise RuntimeError(f"Bilibili error {data.get('code')}: {data.get('message')}")
+    rows = []
+    for item in (data.get("data") or {}).get("arc_audits") or []:
+        arc = item.get("Archive") or {}
+        rows.append({
+            "bvid": arc.get("bvid"), "title": arc.get("title"), "state": arc.get("state"),
+            "state_desc": arc.get("state_desc"), "reject_reason": arc.get("reject_reason"),
+            "dtime": arc.get("dtime"), "ptime": arc.get("ptime"),
+        })
+    return rows
+
+
 def _print_qr(url: str) -> None:
     try:
         import qrcode

@@ -7,7 +7,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-from . import audio, cards, prompts, subtitles, summarize, transcripts, tts, video
+from . import audio, branding, cards, prompts, subtitles, summarize, transcripts, tts, video
 from .files import Stamps, fingerprint, write_text_atomic
 from .languages import STYLES, Language, get_language
 from .llm import LLM, OpenAILLM
@@ -31,6 +31,8 @@ class Config:
     whisper_model: str = "base.en"
     openai_transcribe_model: str = "gpt-4o-mini-transcribe"
     llm_model: str = "gpt-5.4-mini"
+    brand_name: str | None = None
+    brand_tagline: str | None = None
     tts_model: str = tts.DEFAULT_TTS_MODEL
     tts_voice: str | None = None
     keep_audio: bool = False
@@ -126,6 +128,8 @@ def _render_language(
     llm: LLM, tts_engine: tts.TTSEngine, workdir: Path, stage: "_Stages",
 ) -> dict[str, Path]:
     code = language.code
+    brand = branding.brand_for(code, config.brand_name, config.brand_tagline)
+    intro = branding.intro(code, brand)
     outputs: dict[str, Path] = {}
     with stage.timed(f"text.{code}"):
         if code != "en":
@@ -138,8 +142,8 @@ def _render_language(
             workdir / f"script.{code}.txt",
             fingerprint(llm.name, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER, prompts.SHORTEN_SCRIPT_USER,
                         prompts.STYLE_RULES[config.style],
-                        language, summarize.TARGET_MINUTES, config.max_minutes, notes),
-            lambda: summarize.write_script(llm, episode, notes, language, config.style, config.max_minutes),
+                        language, summarize.TARGET_MINUTES, config.max_minutes, notes, intro),
+            lambda: summarize.write_script(llm, episode, notes, language, config.style, config.max_minutes, intro),
         )
     outputs[f"script.{code}"] = script_path
     script = script_path.read_text()
@@ -160,33 +164,34 @@ def _render_language(
     if config.social and code in SOCIAL_LANGUAGES:
         with stage.timed(f"social.{code}"):
             post, social_outputs = _render_social(episode, config, language, outputs.get(f"notes.{code}"),
-                                                  notes, llm, workdir, stage)
+                                                  notes, llm, workdir, stage, brand)
         outputs |= social_outputs
 
     if config.video:
         with stage.timed(f"video.{code}"):
             outputs[f"video.{code}"] = _render_video(episode, config, code, post, digest_path, srt_path,
-                                                     digest_fp, workdir, stage)
+                                                     digest_fp, workdir, stage, brand)
     return outputs
 
 
-def _render_social(episode, config, language, localized_notes_path, notes, llm, workdir, stage):
+def _render_social(episode, config, language, localized_notes_path, notes, llm, workdir, stage, brand):
     code = language.code
     source_notes = localized_notes_path.read_text() if localized_notes_path else notes
     post_json = stage.text(
         workdir / f"post.{code}.json",
         fingerprint(llm.name, prompts.SOCIAL_SYSTEM, prompts.SOCIAL_USER, prompts.SOCIAL_SCHEMA,
-                    config.style, source_notes),
-        lambda: json.dumps(summarize.social_post(llm, episode, source_notes, config.style),
+                    config.style, source_notes, brand),
+        lambda: json.dumps(summarize.social_post(llm, episode, source_notes, config.style, brand.name),
                            ensure_ascii=False, indent=2),
     )
     post = json.loads(post_json.read_text())
     cards_dir = workdir / f"cards_{code}"
-    cards_fp = fingerprint(post, config.style, "cards-v2")
+    cards_fp = fingerprint(post, config.style, brand, "cards-v3")
     marker = cards_dir / ".stamp"
     if not stage.fresh(marker, cards_fp):
         shutil.rmtree(cards_dir, ignore_errors=True)
-        cards.render_social_cards(cards_dir, post, episode.podcast_title, episode.title, config.style)
+        cards.render_social_cards(cards_dir, post, episode.podcast_title, episode.title, config.style,
+                                  brand=brand.name)
         marker.write_text(cards_fp)
         stage.record(marker, cards_fp)
     card_paths = sorted(cards_dir.glob("*.png"))
@@ -195,16 +200,17 @@ def _render_social(episode, config, language, localized_notes_path, notes, llm, 
     return post, {f"post.xhs.{code}": xhs, f"post.bilibili.{code}": bili, f"cards.{code}": cards_dir}
 
 
-def _render_video(episode, config, code, post, digest_path, srt_path, digest_fp, workdir, stage) -> Path:
+def _render_video(episode, config, code, post, digest_path, srt_path, digest_fp, workdir, stage, brand) -> Path:
     title = post["cover_title"] if post else episode.podcast_title
     subtitle = post["cover_subtitle"] if post else episode.title
     frame = workdir / f"frame.{code}.png"
     video_path = workdir / f"video.{code}.mp4"
-    video_fp = fingerprint(digest_fp, title, subtitle, config.style, "video-v1")
+    video_fp = fingerprint(digest_fp, title, subtitle, config.style, brand, "video-v2")
     if not stage.fresh(video_path, video_fp):
         footer = "AI 辅助整理 · 内容来自原节目" if code == "zh" else "AI-assisted summary of the original episode"
         cards.render_cover(frame, title, subtitle, episode.podcast_title, episode.title,
-                           cards.theme_for(config.style), size=cards.LANDSCAPE, footer=footer)
+                           cards.theme_for(config.style), brand=brand.name, size=cards.LANDSCAPE, footer=footer,
+                           source_prefix="来源：" if code == "zh" else "Source: ")
         video.render_video(frame, digest_path, srt_path, video_path)
         stage.record(video_path, video_fp)
     return video_path

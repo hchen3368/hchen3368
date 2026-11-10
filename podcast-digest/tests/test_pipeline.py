@@ -208,3 +208,19 @@ def test_notes_prompt_includes_cleaned_description_and_guest_section():
     assert "Dr. Jane Roe, PhD, professor at NYU." in Capture.user
     assert "ads.example.com" not in Capture.user
     assert Capture.user.count("</description>") == 1
+
+
+def test_script_starts_with_our_brand_intro(tmp_path, monkeypatch, episode):
+    monkeypatch.delenv("PD_BRAND_NAME", raising=False)
+    monkeypatch.delenv("PD_BRAND_TAGLINE", raising=False)
+    monkeypatch.setattr(pipeline, "build_transcript_sources", lambda config: [FakeSource()])
+    llm = FakeLLM()
+    config = pipeline.Config(output_dir=tmp_path, languages=["zh"], social=False, video=False)
+    result = pipeline.run(episode, config, llm=llm, tts_engine=FakeTTS())
+    script = result.outputs["script.zh"].read_text()
+    assert script.startswith("把好播客，浓缩成三分钟。这里是长话短听。\n\n你每天洗冷水澡吗？")
+    assert 'continues right after it' in llm.calls[-1] and "这里是长话短听" in llm.calls[-1]
+
+    config.brand_name, config.brand_tagline = "我的频道", "三分钟听懂一期好播客。"
+    result = pipeline.run(episode, config, llm=llm, tts_engine=FakeTTS())
+    assert result.outputs["script.zh"].read_text().startswith("三分钟听懂一期好播客。这里是我的频道。")

@@ -40,6 +40,8 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument("--llm-model", default="gpt-5.4-mini")
     run.add_argument("--tts-model", default=tts.DEFAULT_TTS_MODEL)
     run.add_argument("--voice", help="TTS voice; default per language (en: alloy, zh: marin)")
+    run.add_argument("--brand-name", help="Our channel name for the intro (env PD_BRAND_NAME)")
+    run.add_argument("--brand-tagline", help="Tagline said before the name (env PD_BRAND_TAGLINE)")
     run.add_argument("--keep-audio", action="store_true", help="Keep the downloaded episode audio")
     run.add_argument(
         "--force", action="store_true",
@@ -84,6 +86,8 @@ def main(argv: list[str] | None = None) -> None:
             llm_model=args.llm_model,
             tts_model=args.tts_model,
             tts_voice=args.voice,
+            brand_name=args.brand_name,
+            brand_tagline=args.brand_tagline,
             keep_audio=args.keep_audio,
             force=args.force,
         )

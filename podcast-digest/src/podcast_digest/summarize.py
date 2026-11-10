@@ -50,6 +50,7 @@ def episode_description(episode: Episode, max_chars: int = DESCRIPTION_MAX_CHARS
 def write_script(
     llm: LLM, episode: Episode, notes: str,
     language: Language = LANGUAGES["en"], style: str = "auto", max_minutes: float = MAX_MINUTES,
+    intro: str = "",
 ) -> str:
     rate = language.units_per_minute
     low, high, max_length = int(TARGET_MINUTES[0] * rate), int(TARGET_MINUTES[1] * rate), int(max_minutes * rate)
@@ -59,11 +60,11 @@ def write_script(
         prompts.SCRIPT_USER.format(
             low=low, high=min(high, max_length), max_length=max_length, unit=language.unit,
             episode=episode.title, podcast=episode.podcast_title, notes=notes,
-            style_rules=prompts.STYLE_RULES[style],
+            style_rules=prompts.STYLE_RULES[style], intro=intro or "(none)",
             credit_line=language.credit_line.format(podcast=episode.podcast_title),
         ),
     )
-    actual = language.length(script)
+    actual = language.length(script) + language.length(intro)
     if actual > max_length:
         script = llm.complete(
             system,
@@ -72,7 +73,7 @@ def write_script(
                 unit=language.unit, script=script,
             ),
         )
-    return script
+    return f"{intro}\n\n{script.strip()}" if intro else script
 
 
 def translate_notes(llm: LLM, episode: Episode, notes: str, language: Language) -> str:
@@ -82,11 +83,14 @@ def translate_notes(llm: LLM, episode: Episode, notes: str, language: Language) 
     )
 
 
-def social_post(llm: LLM, episode: Episode, notes: str, style: str = "auto") -> dict:
+def social_post(llm: LLM, episode: Episode, notes: str, style: str = "auto", brand: str = "") -> dict:
     tone = "professional and precise" if style == "professional" else "warm, relatable and practical"
     return _unescape_newlines(llm.complete_json(
         prompts.SOCIAL_SYSTEM,
-        prompts.SOCIAL_USER.format(podcast=episode.podcast_title, episode=episode.title, tone=tone, notes=notes),
+        prompts.SOCIAL_USER.format(
+            brand=brand or "(unnamed)", podcast=episode.podcast_title, episode=episode.title,
+            tone=tone, notes=notes,
+        ),
         name="social_post",
         schema=prompts.SOCIAL_SCHEMA,
     ))

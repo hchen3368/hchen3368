@@ -44,6 +44,7 @@ podcast-digest run "huberman lab" --title-contains "Cold & Heat" --language zh -
 |---|---|
 | `--language en,zh` | Output languages. Chinese gets a natural spoken script, Mandarin narration and subtitles. |
 | `--style auto\|hook\|professional` | How the digest opens. `hook` starts with a question tied to the listener's life; `professional` stays formal; `auto` lets the model pick by topic (default). |
+| `--brand-name`, `--brand-tagline` | Our channel's name and tagline (or `PD_BRAND_NAME` / `PD_BRAND_TAGLINE`). Every digest opens with "<tagline>这里是<name>。" and then "今天我们探讨的内容，来自《<original podcast>》…"; the original show is never presented as ours. Defaults are placeholders (长话短听 / 把好播客，浓缩成三分钟。). |
 | `--no-social` | Skip the Xiaohongshu / Bilibili posts and image cards (generated for `zh`). |
 | `--no-video` | Skip the MP4 (cover frame + narration + burned-in subtitles). |
 | `--publish` | Upload the shareable outputs after the run (see Storage). |

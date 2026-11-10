@@ -54,6 +54,9 @@ Translate these notes:
 SCRIPT_SYSTEM = """You write scripts for a short audio digest that a single narrator reads aloud.
 Write for the ear: short sentences, plain words, no markdown, no bullet symbols, no emojis,
 no stage directions. Attribute ideas to the speakers. Do not invent facts beyond the notes.
+You narrate for our own channel, which summarizes other people's podcasts. We are NOT the original
+podcast: never say or imply that this is the original show (e.g. never "这里是《Huberman Lab》" or
+"welcome to the Lex Fridman Podcast"), and refer to its host(s) in the third person.
 When a guest first appears, introduce them with one short descriptor taken from the Guests section
 of the notes (e.g. "MIT theoretical computer scientist Ankur Moitra"). Keep it to a phrase, never a
 full biography, and never add titles, affiliations or awards that the notes do not state.
@@ -61,27 +64,34 @@ full biography, and never add titles, affiliations or awards that the notes do n
 
 STYLE_RULES = {
     "professional": (
-        "Opening: one measured sentence naming the show, the guest(s) and the central question. "
-        "Keep a precise, professional tone throughout; no rhetorical questions to the listener."
+        "Opening: one measured sentence saying where today's content comes from, naming the original "
+        "podcast, the guest(s) with their short descriptors and the central question "
+        "(zh: 今天我们探讨的内容，来自《...》...). Keep a precise, professional tone throughout; "
+        "no rhetorical questions to the listener."
     ),
     "hook": (
-        "Opening: start with one short, concrete question the listener would genuinely care about, "
-        "tied to their daily life, health, work or curiosity. Then introduce the show, guest(s) and "
-        "why this episode answers that question. Keep the rest clear and accurate, not clickbait."
+        "Opening: one sentence saying where today's content comes from, naming the original podcast and "
+        "the guest(s) with their short descriptors (zh: 今天我们探讨的内容，来自《...》...). Then one short, "
+        "concrete question the listener would genuinely care about, tied to their daily life, health, "
+        "work or curiosity, and why this episode answers it. Keep the rest clear and accurate, not clickbait."
     ),
     "auto": (
-        "Opening: first classify the topic. If it touches everyday life (health, fitness, sleep, food, "
-        "habits, money, relationships, career, parenting, productivity), you MUST open with one short, "
-        "concrete question addressed to the listener about their own life (e.g. \"Do you ...?\" / "
-        "\"你有没有...？\"), then introduce the show and guest(s). If it is technical, academic or "
-        "specialist, open professionally with one sentence naming the show, guest(s) and the central "
-        "question, and keep a precise tone."
+        "Opening: first classify the topic. Always start with one sentence saying where today's content "
+        "comes from, naming the original podcast and the guest(s) with their short descriptors "
+        "(zh: 今天我们探讨的内容，来自《...》...). If the topic touches everyday life (health, fitness, sleep, "
+        "food, habits, money, relationships, career, parenting, productivity), you MUST follow with one "
+        "short, concrete question addressed to the listener about their own life (e.g. \"Do you ...?\" / "
+        "\"你有没有...？\"). If it is technical, academic or specialist, state the central question "
+        "professionally instead and keep a precise tone."
     ),
 }
 
 SCRIPT_USER = """Write a short audio digest script for the episode "{episode}" of the podcast "{podcast}",
 based on these notes. Keep it tight: aim for 2-3 minutes spoken (roughly {low}-{high} {unit}).
 Only the most important ideas; it is fine to be shorter. Never exceed {max_length} {unit}.
+
+The audio already starts with our channel's intro, which is added separately: "{intro}"
+Do not repeat or rephrase it; your script continues right after it.
 
 {style_rules}
 
@@ -107,10 +117,13 @@ Use established Chinese terms, not phonetic transliterations; add the English te
 for technical concepts, e.g. 毒物兴奋效应（hormesis）, 棕色脂肪（brown fat）.
 If the topic touches health, medicine or money, include a one-line disclaimer
 (e.g. ⚠️ 仅供参考，不构成医疗建议). Always credit the original English podcast.
+You post for our own channel, which summarizes other people's podcasts; never imply you are the
+original podcast or its host.
 Introduce guests with a short descriptor from the notes' Guests section (e.g. MIT 理论计算机科学家),
 and never add titles, affiliations or awards the notes do not state."""
 
-SOCIAL_USER = """Podcast: {podcast}
+SOCIAL_USER = """Our channel: {brand}
+Podcast: {podcast}
 Episode: {episode}
 Tone: {tone}
 

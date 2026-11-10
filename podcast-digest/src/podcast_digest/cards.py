@@ -109,14 +109,15 @@ def _pill(draw, x, y, text, theme: Theme, size=34) -> int:
 
 
 def render_cover(dest: Path, title: str, subtitle: str, podcast: str, episode: str,
-                 theme: Theme, size=PORTRAIT, footer: str = "AI 辅助整理 · 内容来自原节目") -> Path:
+                 theme: Theme, brand: str = "", size=PORTRAIT, footer: str = "AI 辅助整理 · 内容来自原节目",
+                 source_prefix: str = "来源：") -> Path:
     img = Image.new("RGB", size, theme.background)
     draw = ImageDraw.Draw(img)
     w, h = size
     margin = int(w * 0.08)
     landscape = w > h
     draw.rectangle((0, 0, w, 18), fill=theme.accent)
-    y = _pill(draw, margin, int(h * 0.09), f"播客精华 · {podcast}"[:28], theme, size=34 if not landscape else 38)
+    y = _pill(draw, margin, int(h * 0.09), (brand or "播客精华")[:28], theme, size=34 if not landscape else 38)
     y += int(h * 0.06)
     title_font, title_lines = _fit(draw, title, "bold", 150 if not landscape else 130, w - 2 * margin, 3)
     y = _draw_lines(draw, title_lines, title_font, margin, y, theme.text, 1.25)
@@ -126,7 +127,7 @@ def render_cover(dest: Path, title: str, subtitle: str, podcast: str, episode: s
     _draw_lines(draw, sub_lines, sub_font, margin, y, theme.muted)
     foot_font = font("regular", 30)
     bottom = h - int(h * (0.24 if landscape else 0.07))
-    ep_lines = wrap(draw, episode, foot_font, w - 2 * margin)[:2]
+    ep_lines = wrap(draw, f"{source_prefix}{podcast} · {episode}", foot_font, w - 2 * margin)[:2]
     _draw_lines(draw, ep_lines + [footer], foot_font, margin, bottom - 45 * len(ep_lines), theme.muted, 1.5)
     img.save(dest)
     return dest
@@ -163,13 +164,14 @@ def render_card(dest: Path, number: int, page: int, total: int, heading: str, po
     return dest
 
 
-def render_social_cards(out_dir: Path, post: dict, podcast: str, episode: str, style: str) -> list[Path]:
+def render_social_cards(out_dir: Path, post: dict, podcast: str, episode: str, style: str,
+                        brand: str = "") -> list[Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     theme = theme_for(style)
     cards = post["cards"]
     total = len(cards) + 1
     paths = [render_cover(out_dir / "00_cover.png", post["cover_title"], post["cover_subtitle"],
-                          podcast, episode, theme)]
+                          podcast, episode, theme, brand=brand)]
     paths += [
         render_card(out_dir / f"{i:02d}_card.png", i, i + 1, total, c["heading"], c["points"], podcast, theme)
         for i, c in enumerate(cards, start=1)

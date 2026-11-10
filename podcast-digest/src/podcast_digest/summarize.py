@@ -9,7 +9,7 @@ from .models import Episode
 
 SINGLE_PASS_MAX_WORDS = 120_000
 CHUNK_WORDS = 40_000
-TARGET_MINUTES = (2, 3)
+TARGET_MINUTES = (3, 4.5)
 MAX_MINUTES = 5
 DESCRIPTION_MAX_CHARS = 3000
 URL_RE = re.compile(r"https?://\S+")
@@ -58,7 +58,8 @@ def write_script(
     script = llm.complete(
         system,
         prompts.SCRIPT_USER.format(
-            low=low, high=min(high, max_length), max_length=max_length, unit=language.unit,
+            low=min(low, max_length), high=min(high, max_length), max_length=max_length, unit=language.unit,
+            min_low=min(TARGET_MINUTES[0], max_minutes), min_high=min(TARGET_MINUTES[1], max_minutes),
             episode=episode.title, podcast=episode.podcast_title, notes=notes,
             style_rules=prompts.STYLE_RULES[style], intro=intro or "(none)",
             credit_line=language.credit_line.format(podcast=episode.podcast_title),

@@ -87,8 +87,9 @@ STYLE_RULES = {
 }
 
 SCRIPT_USER = """Write a short audio digest script for the episode "{episode}" of the podcast "{podcast}",
-based on these notes. Keep it tight: aim for 2-3 minutes spoken (roughly {low}-{high} {unit}).
-Only the most important ideas; it is fine to be shorter. Never exceed {max_length} {unit}.
+based on these notes. Aim for {min_low:g}-{min_high:g} minutes spoken (roughly {low}-{high} {unit}).
+Cover the key ideas with enough explanation, examples and context that a listener who skips the
+episode still understands why they matter. No padding or repetition. Never exceed {max_length} {unit}.
 
 The audio already starts with our channel's intro, which is added separately: "{intro}"
 Do not repeat or rephrase it; your script continues right after it.

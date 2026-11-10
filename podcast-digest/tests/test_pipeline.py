@@ -92,7 +92,7 @@ def test_pipeline_end_to_end_and_caches(tmp_path, monkeypatch, episode):
     config.max_minutes = 4
     pipeline.run(episode, config, llm=llm, tts_engine=FakeTTS())
     assert len(llm.calls) == 3
-    assert "2-3 minutes" in llm.calls[-1] and "Never exceed 600 words" in llm.calls[-1]
+    assert "3-4 minutes" in llm.calls[-1] and "Never exceed 600 words" in llm.calls[-1]
 
     config.style = "professional"
     pipeline.run(episode, config, llm=llm, tts_engine=FakeTTS())

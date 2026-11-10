@@ -23,7 +23,7 @@ SOCIAL_LANGUAGES = {"zh"}
 class Config:
     output_dir: Path = Path("output")
     max_minutes: float = summarize.MAX_MINUTES
-    languages: list[str] = field(default_factory=lambda: ["en"])
+    languages: list[str] = field(default_factory=lambda: ["zh"])
     style: str = "auto"
     social: bool = True
     video: bool = True

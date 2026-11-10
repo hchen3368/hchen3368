@@ -75,7 +75,7 @@ def episode():
 def test_pipeline_end_to_end_and_caches(tmp_path, monkeypatch, episode):
     source = FakeSource()
     monkeypatch.setattr(pipeline, "build_transcript_sources", lambda config: [source])
-    config = pipeline.Config(output_dir=tmp_path, video=False)
+    config = pipeline.Config(output_dir=tmp_path, languages=["en"], video=False)
     llm = FakeLLM()
 
     result = pipeline.run(episode, config, llm=llm, tts_engine=FakeTTS())
@@ -133,7 +133,7 @@ class BrokenSource:
 def test_failing_source_falls_through_to_next(tmp_path, monkeypatch, episode):
     good = FakeSource()
     monkeypatch.setattr(pipeline, "build_transcript_sources", lambda config: [BrokenSource(), good])
-    config = pipeline.Config(output_dir=tmp_path, video=False)
+    config = pipeline.Config(output_dir=tmp_path, languages=["en"], video=False)
     result = pipeline.run(episode, config, llm=FakeLLM(), tts_engine=FakeTTS())
     assert good.calls == 1
     assert result.meta["transcript_source"] == "fake"

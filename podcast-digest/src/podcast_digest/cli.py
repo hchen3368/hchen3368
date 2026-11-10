@@ -25,7 +25,7 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument("--title-contains", help="Pick the first episode whose title contains this")
     run.add_argument("--max-minutes", type=float, default=5,
                      help="Hard cap on digest length; scripts aim for 3-4.5 minutes")
-    run.add_argument("--language", default="en", help="Comma-separated output languages, e.g. en,zh")
+    run.add_argument("--language", default="zh", help="Comma-separated output languages (default zh), e.g. zh,en")
     run.add_argument("--style", choices=pipeline.STYLES, default="auto",
                      help="Digest opening: hook (relatable question), professional, or auto")
     run.add_argument("--no-social", action="store_true", help="Skip Xiaohongshu/Bilibili posts and cards")

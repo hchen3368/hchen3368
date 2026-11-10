@@ -128,3 +128,55 @@ def test_list_archives_reads_nested_cookies_and_parses_states(tmp_path):
 
     rows = bilibili.list_archives(cookie_file, session=Session())
     assert rows[0]["bvid"] == "BV1x" and rows[0]["state_desc"] == "定时发布"
+
+
+VIEW = {"archive": {"aid": 7, "copyright": 1, "tid": 201, "cover": "http://i0/c.jpg", "title": "old",
+                    "desc": "old desc", "tag": "AI,科普", "dtime": 1794398400},
+        "videos": [{"filename": "n123", "title": "P1", "desc": "", "cid": 99}]}
+
+
+def test_build_edit_changes_only_text_and_schedule():
+    keep = bilibili.build_edit(VIEW, title="new")
+    assert keep["title"] == "new" and keep["desc"] == "old desc" and keep["dtime"] == 1794398400
+    assert keep["videos"] == [{"filename": "n123", "title": "P1", "desc": "", "cid": 99}]
+    now = bilibili.build_edit(VIEW, desc="new desc", immediate=True)
+    assert "dtime" not in now and now["desc"] == "new desc" and now["cover"] == "http://i0/c.jpg"
+
+
+def test_apply_requests_dry_run_then_skips_done(tmp_path, monkeypatch):
+    cookie_file = tmp_path / "c.json"
+    cookie_file.write_text(json.dumps([{"name": "SESSDATA", "value": "s"}, {"name": "bili_jct", "value": "j"}]))
+    calls = []
+
+    class Resp:
+        def __init__(self, data):
+            self.data = data
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"code": 0, "data": self.data}
+
+    class Session:
+        def get(self, url, params, cookies, headers, timeout):
+            calls.append(("get", params))
+            return Resp(VIEW)
+
+        def post(self, url, params, json, cookies, headers, timeout):
+            calls.append(("post", params, json))
+            return Resp({})
+
+    monkeypatch.setattr("requests.Session", Session)
+    requests_dir = tmp_path / "req"
+    requests_dir.mkdir()
+    (requests_dir / "001.json").write_text(json.dumps({"action": "edit", "bvid": "BV1", "title": "T", "immediate": True}))
+    results = bilibili.apply_requests(requests_dir, cookie_file)
+    assert results[0]["ok"] and results[0]["dry_run"] and "dtime" not in results[0]["payload"]
+    assert [c[0] for c in calls] == ["get"]
+
+    (requests_dir / "002.json").write_text(json.dumps(
+        {"action": "edit", "bvid": "BV1", "title": "T", "immediate": True, "dry_run": False}))
+    results = bilibili.apply_requests(requests_dir, cookie_file)
+    assert [r["request"] for r in results] == ["002.json"]
+    assert calls[-1][0] == "post" and calls[-1][1] == {"csrf": "j"} and calls[-1][2]["title"] == "T"

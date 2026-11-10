@@ -58,6 +58,10 @@ jobs:
           ${{ inputs.immediate && '--immediate' || '' }}
           ${{ inputs.dry_run && '--dry-run' || '' }}
 
+      - name: Apply edit requests
+        if: ${{ always() }}
+        run: podcast-digest bilibili-apply-requests --cookies "$RUNNER_TEMP/bilibili_cookies.json"
+
       - name: Show submissions on the account
         if: ${{ always() }}
         continue-on-error: true
@@ -68,9 +72,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add bilibili-queue
+          git add bilibili-queue bilibili-requests
           if ! git diff --cached --quiet; then
-            git commit -m "Record Bilibili uploads"
+            git commit -m "Record Bilibili uploads and edits"
             git push
           fi
 

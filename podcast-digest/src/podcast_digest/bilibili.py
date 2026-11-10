@@ -156,6 +156,74 @@ def web_cookies(cookie_file: Path) -> dict[str, str]:
     return found
 
 
+VIEW_URL = "https://member.bilibili.com/x/vupre/web/archive/view"
+EDIT_URL = "https://member.bilibili.com/x/vu/web/edit"
+WEB_HEADERS = {"User-Agent": "podcast-digest/0.1 (biliup)", "Referer": "https://member.bilibili.com/"}
+
+
+def _checked(response) -> dict:
+    response.raise_for_status()
+    data = response.json()
+    if data.get("code") != 0:
+        raise RuntimeError(f"Bilibili error {data.get('code')}: {data.get('message')}")
+    return data.get("data") or {}
+
+
+def build_edit(view: dict, title: str | None = None, desc: str | None = None,
+               immediate: bool = False) -> dict:
+    """Re-submits the archive as it is, changing only title/description and, if asked, the schedule."""
+    arc = view["archive"]
+    payload = {
+        "aid": arc["aid"], "copyright": arc["copyright"], "tid": arc["tid"], "cover": arc["cover"],
+        "title": title or arc["title"], "desc": desc if desc is not None else arc.get("desc", ""),
+        "tag": arc.get("tag", ""), "source": arc.get("source", ""), "dynamic": arc.get("dynamic", ""),
+        "no_reprint": arc.get("no_reprint", 0),
+        "videos": [{"filename": v["filename"], "title": v.get("title", ""), "desc": v.get("desc", ""),
+                    "cid": v["cid"]} for v in view["videos"]],
+    }
+    if arc.get("dtime") and not immediate:
+        payload["dtime"] = arc["dtime"]
+    return payload
+
+
+def edit_archive(cookie_file: Path, bvid: str, title: str | None = None, desc: str | None = None,
+                 immediate: bool = False, dry_run: bool = False, session=None) -> dict:
+    import requests
+
+    session = session or requests.Session()
+    cookies = web_cookies(cookie_file)
+    view = _checked(session.get(VIEW_URL, params={"bvid": bvid}, cookies=cookies, headers=WEB_HEADERS, timeout=30))
+    payload = build_edit(view, title, desc, immediate)
+    if dry_run:
+        return {"dry_run": True, "current_dtime": view["archive"].get("dtime"), "payload": payload}
+    _checked(session.post(EDIT_URL, params={"csrf": cookies["bili_jct"]}, json=payload, cookies=cookies,
+                          headers=WEB_HEADERS, timeout=30))
+    return {"dry_run": False, "edited": bvid, "payload": payload}
+
+
+def apply_requests(requests_dir: Path, cookie_file: Path) -> list[dict]:
+    """Runs each pending request file (JSON with action "edit") once; writes <name>.result.json."""
+    results = []
+    for request_path in sorted(requests_dir.glob("*.json")):
+        if request_path.name.endswith(".result.json"):
+            continue
+        result_path = request_path.with_name(request_path.stem + ".result.json")
+        if result_path.exists():
+            continue
+        request = json.loads(request_path.read_text())
+        try:
+            if request.get("action") != "edit":
+                raise ValueError(f"Unknown action {request.get('action')!r}")
+            result = edit_archive(cookie_file, request["bvid"], request.get("title"), request.get("desc"),
+                                  request.get("immediate", False), request.get("dry_run", True))
+            result["ok"] = True
+        except Exception as exc:
+            result = {"ok": False, "error": str(exc)}
+        result_path.write_text(json.dumps(result, ensure_ascii=False, indent=2))
+        results.append({"request": request_path.name, **result})
+    return results
+
+
 def list_archives(cookie_file: Path, session=None) -> list[dict]:
     """Read-only: the account's recent submissions with review / schedule state."""
     import requests

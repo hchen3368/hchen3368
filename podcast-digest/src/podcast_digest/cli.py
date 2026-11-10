@@ -84,6 +84,10 @@ def main(argv: list[str] | None = None) -> None:
     bs = sub.add_parser("bilibili-status", help="List your recent Bilibili submissions and their review state")
     bs.add_argument("--cookies", type=Path, default=bilibili.DEFAULT_COOKIE_FILE)
 
+    br = sub.add_parser("bilibili-apply-requests", help="Run pending edit requests in bilibili-requests/ (used by CI)")
+    br.add_argument("--requests", type=Path, default=Path("bilibili-requests"))
+    br.add_argument("--cookies", type=Path, default=bilibili.DEFAULT_COOKIE_FILE)
+
     pub = sub.add_parser(
         "publish",
         help="Upload digests, notes, posts, cards and videos (never transcripts) to storage",
@@ -159,6 +163,9 @@ def main(argv: list[str] | None = None) -> None:
     elif args.command == "bilibili-status":
         rows = bilibili.list_archives(args.cookies)
         print(json.dumps(rows, ensure_ascii=False, indent=2) if rows else "No submissions found")
+    elif args.command == "bilibili-apply-requests":
+        results = bilibili.apply_requests(args.requests, args.cookies)
+        print(json.dumps(results, ensure_ascii=False, indent=2) if results else "No pending requests")
     elif args.command == "publish":
         _publish(args.episode_dirs)
 

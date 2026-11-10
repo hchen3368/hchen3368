@@ -49,6 +49,7 @@ podcast-digest run "huberman lab" --title-contains "Cold & Heat" --language zh -
 | `--no-social` | Skip the Xiaohongshu / Bilibili posts and image cards (generated for `zh`). |
 | `--no-video` | Skip the MP4 (cover frame + narration + burned-in subtitles). |
 | `--publish` | Upload the shareable outputs after the run (see Storage). |
+| `--target-minutes` | Optional soft length target (e.g. `10` means roughly 8–12 minutes). It only guides what the script keeps; the script is never padded or trimmed afterwards. |
 | `--max-minutes` | Hard cap on digest length (default 5). Scripts aim for 3–4.5 minutes (decided while writing the script) and are shortened only if they exceed the cap. |
 | `--llm-model`, `--voice`, `--keep-audio`, `--force` | Models, voice, keep downloaded audio, recompute everything. |
 

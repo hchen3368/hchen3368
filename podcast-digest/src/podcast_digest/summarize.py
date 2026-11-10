@@ -48,10 +48,20 @@ def episode_description(episode: Episode, max_chars: int = DESCRIPTION_MAX_CHARS
 def write_script(
     llm: LLM, episode: Episode, notes: str,
     language: Language = LANGUAGES["en"], style: str = "auto", max_minutes: float | None = None,
-    intro: str = "",
+    intro: str = "", target_minutes: float | None = None,
 ) -> str:
-    max_length = int(max_minutes * language.units_per_minute) if max_minutes else None
-    length_limit = f" Hard limit: {max_length} {language.unit}." if max_length else ""
+    rate = language.units_per_minute
+    max_length = int(max_minutes * rate) if max_minutes else None
+    length_limit = ""
+    if target_minutes:
+        low, high = int(target_minutes * 0.8 * rate), int(target_minutes * 1.2 * rate)
+        length_limit += (
+            f" Aim for about {target_minutes:g} minutes spoken (roughly {low}-{high} {language.unit}): "
+            "choose the most important questions, answers, tensions and insights to fit that, rather "
+            "than covering everything thinly."
+        )
+    if max_length:
+        length_limit += f" Hard limit: {max_length} {language.unit}."
     system = prompts.SCRIPT_SYSTEM.format(spoken_rules=language.spoken_rules)
     script = llm.complete(
         system,

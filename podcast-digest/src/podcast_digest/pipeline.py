@@ -23,6 +23,7 @@ SOCIAL_LANGUAGES = {"zh"}
 class Config:
     output_dir: Path = Path("output")
     max_minutes: float | None = None
+    target_minutes: float | None = None
     languages: list[str] = field(default_factory=lambda: ["zh"])
     style: str = "auto"
     social: bool = True
@@ -146,8 +147,10 @@ def _render_language(
             fingerprint(llm.name, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER, prompts.SHORTEN_SCRIPT_USER,
                         prompts.OPENING_RULES,
                         prompts.STYLE_RULES[config.style],
-                        language, config.max_minutes, notes, intro),
-            lambda: summarize.write_script(llm, episode, notes, language, config.style, config.max_minutes, intro),
+                        language, config.max_minutes, config.target_minutes, notes, intro),
+            lambda: summarize.write_script(
+                llm, episode, notes, language, config.style, config.max_minutes, intro, config.target_minutes
+            ),
         )
     outputs[f"script.{code}"] = script_path
     script = script_path.read_text()

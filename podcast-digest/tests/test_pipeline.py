@@ -281,3 +281,22 @@ def test_script_prompt_has_spoken_rules_and_context_opening():
     assert "当时他发现" in Capture.system and "Never add the English name" in Capture.system
     assert "Context hook" in Capture.user and "never add outside news" in Capture.user
     assert "State the central question plainly" in Capture.user
+
+
+def test_target_minutes_is_soft_guidance_only():
+    from podcast_digest import summarize
+    from podcast_digest.languages import LANGUAGES
+
+    class Capture:
+        name = "c"
+        calls = []
+
+        def complete(self, system, user):
+            Capture.calls.append(user)
+            return "字" * 9000
+
+    episode = Episode(podcast_title="Show", title="Ep", audio_url="https://example.com/a.mp3")
+    script = summarize.write_script(Capture(), episode, "notes", LANGUAGES["zh"], target_minutes=10)
+    assert len(Capture.calls) == 1 and len(script) == 9000
+    assert "Aim for about 10 minutes spoken (roughly 2320-3480 characters)" in Capture.calls[0]
+    assert "Hard limit" not in Capture.calls[0]

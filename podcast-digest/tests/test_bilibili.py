@@ -89,3 +89,18 @@ def test_next_publish_time_is_next_day_in_beijing():
     when = bilibili.next_publish_time(now)
     assert when.isoformat() == "2026-11-11T20:00:00+08:00"
     assert 2 * 3600 <= (when - now).total_seconds() <= 15 * 86400
+
+
+def test_cli_starts_without_optional_dependencies():
+    import subprocess
+
+    code = (
+        "import sys\n"
+        "for name in ('PIL', 'boto3', 'faster_whisper', 'numpy'):\n"
+        "    sys.modules[name] = None\n"
+        "from podcast_digest import cli\n"
+        "cli.main(['bilibili-upload', '--help'])\n"
+    )
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    assert "bilibili-upload" in result.stdout

@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
 
 PORTRAIT = (1080, 1440)
 LANDSCAPE = (1920, 1080)
@@ -38,15 +37,23 @@ def theme_for(style: str) -> Theme:
     return THEMES["professional" if style == "professional" else "warm"]
 
 
+def _pil():
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except ImportError as exc:
+        raise RuntimeError("Image cards need Pillow: pip install 'podcast-digest[social]'") from exc
+    return Image, ImageDraw, ImageFont
+
+
 @lru_cache(maxsize=64)
-def font(weight: str, size: int) -> ImageFont.FreeTypeFont:
+def font(weight: str, size: int) -> "ImageFont.FreeTypeFont":
     for path, index in FONT_CANDIDATES[weight]:
         if Path(path).exists():
-            return ImageFont.truetype(path, size, index=index)
+            return _pil()[2].truetype(path, size, index=index)
     raise FileNotFoundError("No CJK font found; install fonts-noto-cjk")
 
 
-def wrap(draw: ImageDraw.ImageDraw, text: str, fnt: ImageFont.FreeTypeFont, width: int) -> list[str]:
+def wrap(draw: "ImageDraw.ImageDraw", text: str, fnt: "ImageFont.FreeTypeFont", width: int) -> list[str]:
     lines: list[str] = []
     current = ""
     for token in TOKEN_RE.findall(text):
@@ -111,8 +118,9 @@ def _pill(draw, x, y, text, theme: Theme, size=34) -> int:
 def render_cover(dest: Path, title: str, subtitle: str, podcast: str, episode: str,
                  theme: Theme, brand: str = "", size=PORTRAIT, footer: str = "AI 辅助整理 · 内容来自原节目",
                  source_prefix: str = "来源：") -> Path:
-    img = Image.new("RGB", size, theme.background)
-    draw = ImageDraw.Draw(img)
+    image, image_draw, _ = _pil()
+    img = image.new("RGB", size, theme.background)
+    draw = image_draw.Draw(img)
     w, h = size
     margin = int(w * 0.08)
     landscape = w > h
@@ -135,8 +143,9 @@ def render_cover(dest: Path, title: str, subtitle: str, podcast: str, episode: s
 
 def render_card(dest: Path, number: int, page: int, total: int, heading: str, points: list[str],
                 podcast: str, theme: Theme, size=PORTRAIT) -> Path:
-    img = Image.new("RGB", size, theme.background)
-    draw = ImageDraw.Draw(img)
+    image, image_draw, _ = _pil()
+    img = image.new("RGB", size, theme.background)
+    draw = image_draw.Draw(img)
     w, h = size
     margin = int(w * 0.08)
     draw.rectangle((0, 0, w, 18), fill=theme.accent)

@@ -1,0 +1,25 @@
+{
+  "dry_run": true,
+  "current_dtime": 1794398400,
+  "payload": {
+    "aid": 117590953301524,
+    "copyright": 1,
+    "tid": 201,
+    "cover": "http://i2.hdslb.com/bfs/archive/179d262090828864dc51ececb5eea32a1944b6bc.png",
+    "title": "2026 AI 前沿版图 - 中美AI发展对比",
+    "desc": "2026 年的 AI 版图正在重新洗牌：DeepSeek R1 带来的冲击，中美开源模型的竞赛，AI 编程、强化学习、缩放定律、长上下文、智能体和 GPU 生态都在快速变化。两位 AI 研究者讨论：开源模型为何还能继续扩散，模型为什么要在快思考和慢思考之间切换，前沿的进步到底更多来自系统还是架构。\n\n【原出处】Lex Fridman Podcast《#490 – State of AI in 2026: LLMs, Coding, Scaling Laws, China, Agents, GPUs, AGI》\n原节目链接：https://lexfridman.com/ai-sota-2026/\n本视频由长话短听基于原节目内容进行 AI 辅助中文整理，观点归原嘉宾所有，完整内容请收听原节目。",
+    "tag": "AI,大模型,LexFridman,DeepSeek,开源模型,RLVR,Agent,GPU,AGI,长上下文",
+    "source": "",
+    "dynamic": "",
+    "no_reprint": 0,
+    "videos": [
+      {
+        "filename": "n261110ad3cjuoef3q1ev31ivujqbew9",
+        "title": "video.zh",
+        "desc": "",
+        "cid": 43484253800
+      }
+    ]
+  },
+  "ok": true
+}

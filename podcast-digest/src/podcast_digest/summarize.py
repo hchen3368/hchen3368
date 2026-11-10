@@ -9,6 +9,7 @@ from .models import Episode
 
 SINGLE_PASS_MAX_WORDS = 120_000
 CHUNK_WORDS = 40_000
+MIN_LENGTH_RATIO = 0.9
 TRANSCRIPT_TAG_RE = re.compile(r"</?\s*transcript(_part)?\s*>", re.IGNORECASE)
 
 
@@ -36,15 +37,26 @@ def write_script(
     llm: LLM, episode: Episode, notes: str, minutes: int,
     language: Language = LANGUAGES["en"], style: str = "auto",
 ) -> str:
-    return llm.complete(
-        prompts.SCRIPT_SYSTEM.format(writing_rules=language.writing_rules),
+    target = minutes * language.units_per_minute
+    system = prompts.SCRIPT_SYSTEM.format(writing_rules=language.writing_rules)
+    script = llm.complete(
+        system,
         prompts.SCRIPT_USER.format(
-            length=minutes * language.units_per_minute, unit=language.unit, minutes=minutes,
+            length=target, unit=language.unit, minutes=minutes,
             episode=episode.title, podcast=episode.podcast_title, notes=notes,
             style_rules=prompts.STYLE_RULES[style],
             credit_line=language.credit_line.format(podcast=episode.podcast_title),
         ),
     )
+    actual = language.length(script)
+    if actual < MIN_LENGTH_RATIO * target:
+        script = llm.complete(
+            system,
+            prompts.EXPAND_SCRIPT_USER.format(
+                actual=actual, length=target, unit=language.unit, notes=notes, script=script,
+            ),
+        )
+    return script
 
 
 def translate_notes(llm: LLM, episode: Episode, notes: str, language: Language) -> str:
@@ -56,12 +68,22 @@ def translate_notes(llm: LLM, episode: Episode, notes: str, language: Language) 
 
 def social_post(llm: LLM, episode: Episode, notes: str, style: str = "auto") -> dict:
     tone = "professional and precise" if style == "professional" else "warm, relatable and practical"
-    return llm.complete_json(
+    return _unescape_newlines(llm.complete_json(
         prompts.SOCIAL_SYSTEM,
         prompts.SOCIAL_USER.format(podcast=episode.podcast_title, episode=episode.title, tone=tone, notes=notes),
         name="social_post",
         schema=prompts.SOCIAL_SCHEMA,
-    )
+    ))
+
+
+def _unescape_newlines(value):
+    if isinstance(value, str):
+        return value.replace("\\r\\n", "\n").replace("\\n", "\n")
+    if isinstance(value, list):
+        return [_unescape_newlines(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _unescape_newlines(v) for k, v in value.items()}
+    return value
 
 
 def chunk_lines(text: str, max_words: int) -> list[str]:

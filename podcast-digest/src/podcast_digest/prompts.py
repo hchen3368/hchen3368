@@ -79,9 +79,22 @@ Then:
 Notes:
 {notes}"""
 
+EXPAND_SCRIPT_USER = """This draft is {actual} {unit}; it must be about {length} {unit}.
+Expand it to about {length} {unit} by adding more substance from the notes (explanations,
+examples, nuances, takeaways). Keep the same opening style, tone, language and closing line.
+Do not pad with filler or repetition. Return only the full revised script.
+
+Notes:
+{notes}
+
+Draft:
+{script}"""
+
 SOCIAL_SYSTEM = """You are a top Chinese content creator who turns podcast notes into posts for
 Xiaohongshu (小红书) and Bilibili (哔哩哔哩). You write in natural Simplified Chinese.
 Be accurate: only use facts from the notes, never exaggerate or invent numbers.
+Use established Chinese terms, not phonetic transliterations; add the English term in parentheses
+for technical concepts, e.g. 毒物兴奋效应（hormesis）, 棕色脂肪（brown fat）.
 If the topic touches health, medicine or money, include a one-line disclaimer
 (e.g. ⚠️ 仅供参考，不构成医疗建议). Always credit the original English podcast."""
 

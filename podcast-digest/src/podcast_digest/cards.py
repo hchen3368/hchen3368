@@ -15,6 +15,7 @@ FONT_CANDIDATES = {
     "regular": [("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 2),
                 ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", 0)],
 }
+NO_LINE_START = "，。、；：！？）」』”’》,.;:!?)"
 TOKEN_RE = re.compile(r"[A-Za-z0-9][\w.\-'’%+/]*\s*|\s+|.", re.UNICODE)
 
 
@@ -57,7 +58,27 @@ def wrap(draw: ImageDraw.ImageDraw, text: str, fnt: ImageFont.FreeTypeFont, widt
             current = candidate
     if current.strip():
         lines.append(current.rstrip())
+    return balance_cjk_lines(lines)
+
+
+def balance_cjk_lines(lines: list[str], min_tail: int = 3) -> list[str]:
+    """Keeps punctuation off line starts and avoids a one- or two-character last line."""
+    lines = list(lines)
+    for i in range(1, len(lines)):
+        while lines[i] and lines[i][0] in NO_LINE_START:
+            lines[i - 1] += lines[i][0]
+            lines[i] = lines[i][1:]
+    lines = [line for line in lines if line]
+    if len(lines) >= 2 and len(lines[-1]) < min_tail:
+        prev = lines[-2]
+        take = min_tail - len(lines[-1])
+        if len(prev) > take + min_tail and all(_is_cjk(c) for c in prev[-take:]):
+            lines[-2], lines[-1] = prev[:-take], prev[-take:] + lines[-1]
     return lines
+
+
+def _is_cjk(char: str) -> bool:
+    return "\u3400" <= char <= "\u9fff"
 
 
 def _fit(draw, text: str, weight: str, size: int, width: int, max_lines: int, min_size: int = 28):
@@ -123,19 +144,17 @@ def render_card(dest: Path, number: int, page: int, total: int, heading: str, po
     y = _draw_lines(draw, head_lines, head_font, margin, int(h * 0.17), theme.text, 1.25) + 40
     panel_top = y
     body_width = w - 2 * margin - 110
-    size_pt = 50
-    while True:
+    for size_pt in range(60, 30, -2):
         point_font = font("regular", size_pt)
         wrapped = [wrap(draw, p, point_font, body_width) for p in points]
-        needed = sum(len(lines) * int(size_pt * 1.45) + 48 for lines in wrapped) + 60
-        if panel_top + needed < h - 170 or size_pt <= 32:
+        needed = sum(len(lines) * int(size_pt * 1.45) + int(size_pt * 1.2) for lines in wrapped) + 60
+        if panel_top + needed < h - 170:
             break
-        size_pt -= 2
     draw.rounded_rectangle((margin, panel_top, w - margin, panel_top + needed), radius=36, fill=theme.panel)
     y = panel_top + 40
     for lines in wrapped:
         draw.ellipse((margin + 40, y + size_pt * 0.35, margin + 62, y + size_pt * 0.35 + 22), fill=theme.accent)
-        y = _draw_lines(draw, lines, point_font, margin + 86, y, theme.text, 1.45) + 48
+        y = _draw_lines(draw, lines, point_font, margin + 86, y, theme.text, 1.45) + int(size_pt * 1.2)
     foot = font("regular", 30)
     draw.text((margin, h - 110), podcast[:40], font=foot, fill=theme.muted)
     label = f"{page}/{total}"

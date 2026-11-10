@@ -36,8 +36,8 @@ class FakeLLM:
         if "Translate these notes" in user:
             return "## 一句话总结\n笔记。"
         if "Simplified Chinese" in system:
-            return "你每天洗冷水澡吗？这是一段中文脚本，用来测试字幕。最后感谢收听。"
-        return "This is the script. It has two sentences."
+            return "你每天洗冷水澡吗？这是一段中文脚本，用来测试字幕。最后感谢收听。" * 45
+        return "This is the script. It has two sentences. " * 150
 
     def complete_json(self, system, user, name, schema):
         self.calls.append(user)
@@ -151,3 +151,24 @@ def test_split_text_respects_limit():
     chunks = tts.split_text(text, max_chars=200)
     assert all(len(c) <= 200 for c in chunks)
     assert " ".join(chunks) == text
+
+
+class ShortThenLongLLM:
+    name = "short-then-long"
+
+    def __init__(self):
+        self.calls = []
+
+    def complete(self, system, user):
+        self.calls.append(user)
+        return "Too short." if len(self.calls) == 1 else "word " * 760
+
+
+def test_short_script_is_expanded_once():
+    from podcast_digest import summarize
+
+    llm = ShortThenLongLLM()
+    episode = Episode(podcast_title="Show", title="Ep", audio_url="https://example.com/a.mp3")
+    script = summarize.write_script(llm, episode, "notes", minutes=5)
+    assert len(script.split()) == 760
+    assert len(llm.calls) == 2 and "This draft is 2 words" in llm.calls[1]

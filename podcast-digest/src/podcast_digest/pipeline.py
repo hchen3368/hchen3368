@@ -128,12 +128,13 @@ def _render_language(
         if code != "en":
             outputs[f"notes.{code}"] = stage.text(
                 workdir / f"notes.{code}.md",
-                fingerprint(llm.name, prompts.TRANSLATE_NOTES_SYSTEM, prompts.TRANSLATE_NOTES_USER, notes, code),
+                fingerprint(llm.name, prompts.TRANSLATE_NOTES_SYSTEM, prompts.TRANSLATE_NOTES_USER, notes, language),
                 lambda: summarize.translate_notes(llm, episode, notes, language),
             )
         script_path = stage.text(
             workdir / f"script.{code}.txt",
-            fingerprint(llm.name, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER, prompts.STYLE_RULES[config.style],
+            fingerprint(llm.name, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER, prompts.EXPAND_SCRIPT_USER,
+                        prompts.STYLE_RULES[config.style],
                         language, config.minutes, notes),
             lambda: summarize.write_script(llm, episode, notes, config.minutes, language, config.style),
         )
@@ -178,7 +179,7 @@ def _render_social(episode, config, language, localized_notes_path, notes, llm, 
     )
     post = json.loads(post_json.read_text())
     cards_dir = workdir / f"cards_{code}"
-    cards_fp = fingerprint(post, config.style, "cards-v1")
+    cards_fp = fingerprint(post, config.style, "cards-v2")
     marker = cards_dir / ".stamp"
     if not stage.fresh(marker, cards_fp):
         shutil.rmtree(cards_dir, ignore_errors=True)

@@ -95,3 +95,26 @@ def test_storage_from_env():
     assert isinstance(s3, S3Storage) and s3.bucket == "b"
     with pytest.raises(ValueError):
         storage_from_env({"PD_STORAGE": "ftp"})
+
+
+def test_card_lines_avoid_orphans_and_leading_punctuation():
+    from podcast_digest.cards import balance_cjk_lines
+
+    assert balance_cjk_lines(["棕色脂肪参与产热，是关键机制之", "一"]) == ["棕色脂肪参与产热，是关键机", "制之一"]
+    assert balance_cjk_lines(["冷信号会传到下丘脑", "，并触发反应"]) == ["冷信号会传到下丘脑，", "并触发反应"]
+    assert balance_cjk_lines(["Brown fat matters", "a"]) == ["Brown fat matters", "a"]
+
+
+def test_social_post_unescapes_double_escaped_newlines():
+    from podcast_digest.models import Episode
+    from podcast_digest.summarize import social_post
+
+    class EscapingLLM:
+        name = "x"
+
+        def complete_json(self, system, user, name, schema):
+            return {"body": "第一段\\n\\n第二段", "cards": [{"heading": "h", "points": ["a\\nb"]}]}
+
+    post = social_post(EscapingLLM(), Episode(podcast_title="p", title="t", audio_url="https://x/a.mp3"), "n")
+    assert post["body"] == "第一段\n\n第二段"
+    assert post["cards"][0]["points"] == ["a\nb"]

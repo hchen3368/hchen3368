@@ -40,11 +40,12 @@ LANGUAGES = {
         code="zh",
         name="Simplified Chinese",
         unit="characters",
-        units_per_minute=260,
+        units_per_minute=290,
         writing_rules=(
             "Write in natural, spoken Simplified Chinese (简体中文口语), not translated-sounding prose. "
             "Keep proper nouns and technical terms in English in parentheses the first time, e.g. "
-            "纳维-斯托克斯方程（Navier-Stokes）. Use Arabic numerals. Use full-width Chinese punctuation."
+            "纳维-斯托克斯方程（Navier-Stokes）. Use established Chinese terms, never phonetic transliterations "
+            "(e.g. 毒物兴奋效应（hormesis）, not 荷尔米西斯). Use Arabic numerals. Use full-width Chinese punctuation."
         ),
         credit_line="结尾说明：本期内容整理自英文播客《{podcast}》，完整内容请收听原节目。",
         tts_instructions="用标准、自然的普通话朗读，语气亲切清晰，像播客主播一样，语速适中，重点处稍作强调。",

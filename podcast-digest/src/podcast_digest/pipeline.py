@@ -22,7 +22,7 @@ SOCIAL_LANGUAGES = {"zh"}
 @dataclass
 class Config:
     output_dir: Path = Path("output")
-    minutes: int = 5
+    max_minutes: float = summarize.MAX_MINUTES
     languages: list[str] = field(default_factory=lambda: ["en"])
     style: str = "auto"
     social: bool = True
@@ -133,10 +133,10 @@ def _render_language(
             )
         script_path = stage.text(
             workdir / f"script.{code}.txt",
-            fingerprint(llm.name, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER, prompts.EXPAND_SCRIPT_USER,
+            fingerprint(llm.name, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER, prompts.SHORTEN_SCRIPT_USER,
                         prompts.STYLE_RULES[config.style],
-                        language, config.minutes, notes),
-            lambda: summarize.write_script(llm, episode, notes, config.minutes, language, config.style),
+                        language, summarize.TARGET_MINUTES, config.max_minutes, notes),
+            lambda: summarize.write_script(llm, episode, notes, language, config.style, config.max_minutes),
         )
     outputs[f"script.{code}"] = script_path
     script = script_path.read_text()

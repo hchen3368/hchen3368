@@ -36,8 +36,8 @@ class FakeLLM:
         if "Translate these notes" in user:
             return "## 一句话总结\n笔记。"
         if "Simplified Chinese" in system:
-            return "你每天洗冷水澡吗？这是一段中文脚本，用来测试字幕。最后感谢收听。" * 45
-        return "This is the script. It has two sentences. " * 150
+            return "你每天洗冷水澡吗？这是一段中文脚本，用来测试字幕。最后感谢收听。" * 20
+        return "This is the script. It has two sentences. " * 45
 
     def complete_json(self, system, user, name, schema):
         self.calls.append(user)
@@ -89,10 +89,10 @@ def test_pipeline_end_to_end_and_caches(tmp_path, monkeypatch, episode):
     assert source.calls == 1
     assert len(llm.calls) == 2
 
-    config.minutes = 8
+    config.max_minutes = 4
     pipeline.run(episode, config, llm=llm, tts_engine=FakeTTS())
     assert len(llm.calls) == 3
-    assert "about 1200 words" in llm.calls[-1]
+    assert "2-3 minutes" in llm.calls[-1] and "Never exceed 600 words" in llm.calls[-1]
 
     config.style = "professional"
     pipeline.run(episode, config, llm=llm, tts_engine=FakeTTS())
@@ -153,22 +153,34 @@ def test_split_text_respects_limit():
     assert " ".join(chunks) == text
 
 
-class ShortThenLongLLM:
-    name = "short-then-long"
+class LongThenShortLLM:
+    name = "long-then-short"
 
     def __init__(self):
         self.calls = []
 
     def complete(self, system, user):
         self.calls.append(user)
-        return "Too short." if len(self.calls) == 1 else "word " * 760
+        return "word " * 900 if len(self.calls) == 1 else "word " * 400
 
 
-def test_short_script_is_expanded_once():
+def test_script_over_cap_is_shortened_but_short_one_is_kept():
     from podcast_digest import summarize
 
-    llm = ShortThenLongLLM()
     episode = Episode(podcast_title="Show", title="Ep", audio_url="https://example.com/a.mp3")
-    script = summarize.write_script(llm, episode, "notes", minutes=5)
-    assert len(script.split()) == 760
-    assert len(llm.calls) == 2 and "This draft is 2 words" in llm.calls[1]
+    llm = LongThenShortLLM()
+    script = summarize.write_script(llm, episode, "notes")
+    assert len(script.split()) == 400
+    assert len(llm.calls) == 2 and "This draft is 900 words; the hard limit is 750 words" in llm.calls[1]
+
+    class ShortLLM:
+        name = "short"
+        calls = []
+
+        def complete(self, system, user):
+            self.calls.append(user)
+            return "word " * 120
+
+    short = ShortLLM()
+    assert len(summarize.write_script(short, episode, "notes").split()) == 120
+    assert len(short.calls) == 1

@@ -9,7 +9,8 @@ from .models import Episode
 
 SINGLE_PASS_MAX_WORDS = 120_000
 CHUNK_WORDS = 40_000
-MIN_LENGTH_RATIO = 0.9
+TARGET_MINUTES = (2, 3)
+MAX_MINUTES = 5
 TRANSCRIPT_TAG_RE = re.compile(r"</?\s*transcript(_part)?\s*>", re.IGNORECASE)
 
 
@@ -34,26 +35,28 @@ def extract_notes(llm: LLM, episode: Episode, text: str) -> str:
 
 
 def write_script(
-    llm: LLM, episode: Episode, notes: str, minutes: int,
-    language: Language = LANGUAGES["en"], style: str = "auto",
+    llm: LLM, episode: Episode, notes: str,
+    language: Language = LANGUAGES["en"], style: str = "auto", max_minutes: float = MAX_MINUTES,
 ) -> str:
-    target = minutes * language.units_per_minute
+    rate = language.units_per_minute
+    low, high, max_length = int(TARGET_MINUTES[0] * rate), int(TARGET_MINUTES[1] * rate), int(max_minutes * rate)
     system = prompts.SCRIPT_SYSTEM.format(writing_rules=language.writing_rules)
     script = llm.complete(
         system,
         prompts.SCRIPT_USER.format(
-            length=target, unit=language.unit, minutes=minutes,
+            low=low, high=min(high, max_length), max_length=max_length, unit=language.unit,
             episode=episode.title, podcast=episode.podcast_title, notes=notes,
             style_rules=prompts.STYLE_RULES[style],
             credit_line=language.credit_line.format(podcast=episode.podcast_title),
         ),
     )
     actual = language.length(script)
-    if actual < MIN_LENGTH_RATIO * target:
+    if actual > max_length:
         script = llm.complete(
             system,
-            prompts.EXPAND_SCRIPT_USER.format(
-                actual=actual, length=target, unit=language.unit, notes=notes, script=script,
+            prompts.SHORTEN_SCRIPT_USER.format(
+                actual=actual, max_length=max_length, high=min(high, max_length),
+                unit=language.unit, script=script,
             ),
         )
     return script

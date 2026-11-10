@@ -1,6 +1,6 @@
 # podcast-digest
 
-Turn a long podcast episode into a short audio digest you can listen to (and share).
+Turn a long podcast episode into a 2–3 minute audio digest you can listen to (and share).
 
 ```
 discover (iTunes / RSS) → transcript → notes → script → speech (MP3)
@@ -47,7 +47,8 @@ podcast-digest run "huberman lab" --title-contains "Cold & Heat" --language zh -
 | `--no-social` | Skip the Xiaohongshu / Bilibili posts and image cards (generated for `zh`). |
 | `--no-video` | Skip the MP4 (cover frame + narration + burned-in subtitles). |
 | `--publish` | Upload the shareable outputs after the run (see Storage). |
-| `--minutes`, `--llm-model`, `--voice`, `--keep-audio`, `--force` | Length, models, voice, keep downloaded audio, recompute everything. |
+| `--max-minutes` | Hard cap on digest length (default 5). Scripts aim for 2–3 minutes and are shortened only if they exceed the cap. |
+| `--llm-model`, `--voice`, `--keep-audio`, `--force` | Models, voice, keep downloaded audio, recompute everything. |
 
 Outputs land in `output/<podcast>/<episode>/`:
 
@@ -117,14 +118,14 @@ Useful options: `--transcript-sources published,openai-transcribe`, `--whisper-m
 |---|---|---|
 | Transcript | published → local whisper | $0 |
 | Notes + script | `gpt-5.4-mini` | a few cents |
-| Speech (5 min) | `gpt-4o-mini-tts` | ~$0.08 |
+| Speech (2–3 min) | `gpt-4o-mini-tts` | ~$0.04 |
 
 ## Verified runs
 
-| Episode | Length | Transcript source | Digest | Wall time |
+| Episode | Length | Transcript source | Style | Chinese digest |
 |---|---|---|---|---|
-| Lex Fridman #503 – AI Crisis in Math | 3h 42m | published (39k words, free) | 5:03 | ~73 s |
-| Huberman Lab Essentials – Cold & Heat | 38 min | local whisper `base.en` (free) | 4:19 | ~3 min on 4 CPUs |
+| Lex Fridman #503 – AI Crisis in Math | 3h 42m | published (39k words, free) | professional | 2:09 |
+| Huberman Lab Essentials – Cold & Heat | 38 min | local whisper `base.en` (free) | auto → hook | 1:45 |
 
 ## Extending
 

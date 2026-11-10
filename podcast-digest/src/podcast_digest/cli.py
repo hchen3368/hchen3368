@@ -23,7 +23,8 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument("podcast", help="RSS feed URL or search term")
     run.add_argument("--episode", type=int, default=0, help="Index in the feed (0 = latest)")
     run.add_argument("--title-contains", help="Pick the first episode whose title contains this")
-    run.add_argument("--minutes", type=int, default=5)
+    run.add_argument("--max-minutes", type=float, default=5,
+                     help="Hard cap on digest length; scripts aim for 2-3 minutes")
     run.add_argument("--language", default="en", help="Comma-separated output languages, e.g. en,zh")
     run.add_argument("--style", choices=pipeline.STYLES, default="auto",
                      help="Digest opening: hook (relatable question), professional, or auto")
@@ -73,7 +74,7 @@ def main(argv: list[str] | None = None) -> None:
         )
         config = pipeline.Config(
             output_dir=args.output_dir,
-            minutes=args.minutes,
+            max_minutes=args.max_minutes,
             transcript_sources=[s.strip() for s in args.transcript_sources.split(",") if s.strip()],
             languages=[s.strip() for s in args.language.split(",") if s.strip()],
             style=args.style,

@@ -58,16 +58,18 @@ STYLE_RULES = {
         "why this episode answers that question. Keep the rest clear and accurate, not clickbait."
     ),
     "auto": (
-        "Opening: decide from the content. If the topic connects naturally to everyday life "
-        "(health, habits, money, relationships, career, parenting), start with one short, concrete "
-        "question tied to the listener's life, then introduce the show and guest(s). If the topic is "
-        "technical, academic or specialist, open professionally with one sentence naming the show, "
-        "guest(s) and the central question, and keep a precise tone."
+        "Opening: first classify the topic. If it touches everyday life (health, fitness, sleep, food, "
+        "habits, money, relationships, career, parenting, productivity), you MUST open with one short, "
+        "concrete question addressed to the listener about their own life (e.g. \"Do you ...?\" / "
+        "\"你有没有...？\"), then introduce the show and guest(s). If it is technical, academic or "
+        "specialist, open professionally with one sentence naming the show, guest(s) and the central "
+        "question, and keep a precise tone."
     ),
 }
 
-SCRIPT_USER = """Write an audio digest script of about {length} {unit} (about {minutes} minutes spoken)
-for the episode "{episode}" of the podcast "{podcast}", based on these notes.
+SCRIPT_USER = """Write a short audio digest script for the episode "{episode}" of the podcast "{podcast}",
+based on these notes. Keep it tight: aim for 2-3 minutes spoken (roughly {low}-{high} {unit}).
+Only the most important ideas; it is fine to be shorter. Never exceed {max_length} {unit}.
 
 {style_rules}
 
@@ -79,13 +81,9 @@ Then:
 Notes:
 {notes}"""
 
-EXPAND_SCRIPT_USER = """This draft is {actual} {unit}; it must be about {length} {unit}.
-Expand it to about {length} {unit} by adding more substance from the notes (explanations,
-examples, nuances, takeaways). Keep the same opening style, tone, language and closing line.
-Do not pad with filler or repetition. Return only the full revised script.
-
-Notes:
-{notes}
+SHORTEN_SCRIPT_USER = """This draft is {actual} {unit}; the hard limit is {max_length} {unit}.
+Shorten it to about {high} {unit} by keeping only the most important ideas. Keep the same opening
+style, tone, language and closing line. Return only the full revised script.
 
 Draft:
 {script}"""

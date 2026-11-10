@@ -178,8 +178,9 @@ def build_edit(view: dict, title: str | None = None, desc: str | None = None,
         "title": title or arc["title"], "desc": desc if desc is not None else arc.get("desc", ""),
         "tag": arc.get("tag", ""), "source": arc.get("source", ""), "dynamic": arc.get("dynamic", ""),
         "no_reprint": arc.get("no_reprint", 0),
-        "videos": [{"filename": v["filename"], "title": v.get("title", ""), "desc": v.get("desc", ""),
-                    "cid": v["cid"]} for v in view["videos"]],
+        "videos": [{"filename": v["filename"],
+                    "title": (title or arc["title"]) if len(view["videos"]) == 1 else v.get("title", ""),
+                    "desc": v.get("desc", ""), "cid": v["cid"]} for v in view["videos"]],
     }
     if arc.get("dtime") and not immediate:
         payload["dtime"] = arc["dtime"]

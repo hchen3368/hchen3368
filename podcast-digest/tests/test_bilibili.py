@@ -138,7 +138,7 @@ VIEW = {"archive": {"aid": 7, "copyright": 1, "tid": 201, "cover": "http://i0/c.
 def test_build_edit_changes_only_text_and_schedule():
     keep = bilibili.build_edit(VIEW, title="new")
     assert keep["title"] == "new" and keep["desc"] == "old desc" and keep["dtime"] == 1794398400
-    assert keep["videos"] == [{"filename": "n123", "title": "P1", "desc": "", "cid": 99}]
+    assert keep["videos"] == [{"filename": "n123", "title": "new", "desc": "", "cid": 99}]
     now = bilibili.build_edit(VIEW, desc="new desc", immediate=True)
     assert "dtime" not in now and now["desc"] == "new desc" and now["cover"] == "http://i0/c.jpg"
 

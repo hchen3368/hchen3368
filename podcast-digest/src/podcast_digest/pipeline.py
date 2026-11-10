@@ -90,7 +90,8 @@ def run(
     with stage.timed("notes"):
         notes_path = stage.text(
             workdir / "notes.md",
-            fingerprint(llm.name, prompts.NOTES_SYSTEM, prompts.NOTES_USER, transcript.text),
+            fingerprint(llm.name, prompts.NOTES_SYSTEM, prompts.NOTES_USER, transcript.text,
+                        summarize.episode_description(episode)),
             lambda: summarize.extract_notes(llm, episode, transcript.text),
         )
     notes = notes_path.read_text()

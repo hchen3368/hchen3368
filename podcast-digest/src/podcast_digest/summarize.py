@@ -11,7 +11,9 @@ SINGLE_PASS_MAX_WORDS = 120_000
 CHUNK_WORDS = 40_000
 TARGET_MINUTES = (2, 3)
 MAX_MINUTES = 5
-TRANSCRIPT_TAG_RE = re.compile(r"</?\s*transcript(_part)?\s*>", re.IGNORECASE)
+DESCRIPTION_MAX_CHARS = 3000
+URL_RE = re.compile(r"https?://\S+")
+TRANSCRIPT_TAG_RE = re.compile(r"</?\s*(transcript(_part)?|description)\s*>", re.IGNORECASE)
 
 
 def extract_notes(llm: LLM, episode: Episode, text: str) -> str:
@@ -30,8 +32,19 @@ def extract_notes(llm: LLM, episode: Episode, text: str) -> str:
         )
     return llm.complete(
         prompts.NOTES_SYSTEM,
-        prompts.NOTES_USER.format(podcast=episode.podcast_title, episode=episode.title, transcript=text),
+        prompts.NOTES_USER.format(
+            podcast=episode.podcast_title, episode=episode.title,
+            description=episode_description(episode), transcript=text,
+        ),
     )
+
+
+def episode_description(episode: Episode, max_chars: int = DESCRIPTION_MAX_CHARS) -> str:
+    from bs4 import BeautifulSoup
+
+    text = BeautifulSoup(episode.description_html or "", "html.parser").get_text(" ", strip=True)
+    text = TRANSCRIPT_TAG_RE.sub("", URL_RE.sub("", text))
+    return re.sub(r"\s+", " ", text).strip()[:max_chars] or "(none)"
 
 
 def write_script(

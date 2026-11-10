@@ -31,8 +31,8 @@ class Config:
     whisper_model: str = "base.en"
     openai_transcribe_model: str = "gpt-4o-mini-transcribe"
     llm_model: str = "gpt-5.4-mini"
-    tts_model: str = "gpt-4o-mini-tts"
-    tts_voice: str = "alloy"
+    tts_model: str = tts.DEFAULT_TTS_MODEL
+    tts_voice: str | None = None
     keep_audio: bool = False
     force: bool = False
 
@@ -73,7 +73,6 @@ def run(
     tts_engine: tts.TTSEngine | None = None,
 ) -> Result:
     llm = llm or OpenAILLM(config.llm_model)
-    tts_engine = tts_engine or tts.OpenAITTS(config.tts_model, config.tts_voice)
     workdir = episode_workdir(config, episode)
     if config.force:
         _clear_outputs(workdir)
@@ -97,9 +96,12 @@ def run(
     notes = notes_path.read_text()
     outputs["notes.en"] = notes_path
 
+    engines: dict[str, str] = {}
     for code in config.languages:
         language = get_language(code)
-        outputs |= _render_language(episode, config, language, notes, llm, tts_engine, workdir, stage)
+        engine = tts_engine or tts.OpenAITTS(config.tts_model, config.tts_voice or language.tts_voice)
+        engines[code] = engine.name
+        outputs |= _render_language(episode, config, language, notes, llm, engine, workdir, stage)
 
     meta = {
         "episode": asdict(episode) | {"description_html": None},
@@ -112,7 +114,7 @@ def run(
             for name, path in outputs.items() if name.startswith("digest.")
         },
         "llm": llm.name,
-        "tts": tts_engine.name,
+        "tts": engines,
         "timings_seconds": stage.timings,
     }
     write_text_atomic(workdir / "meta.json", json.dumps(meta, ensure_ascii=False, indent=2, default=str))

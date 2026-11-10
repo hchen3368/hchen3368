@@ -4,7 +4,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from . import discovery, pipeline, publish, storage
+from . import discovery, pipeline, publish, storage, tts
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -38,8 +38,8 @@ def main(argv: list[str] | None = None) -> None:
     )
     run.add_argument("--whisper-model", default="base.en")
     run.add_argument("--llm-model", default="gpt-5.4-mini")
-    run.add_argument("--tts-model", default="gpt-4o-mini-tts")
-    run.add_argument("--voice", default="alloy")
+    run.add_argument("--tts-model", default=tts.DEFAULT_TTS_MODEL)
+    run.add_argument("--voice", help="TTS voice; default per language (en: alloy, zh: marin)")
     run.add_argument("--keep-audio", action="store_true", help="Keep the downloaded episode audio")
     run.add_argument(
         "--force", action="store_true",

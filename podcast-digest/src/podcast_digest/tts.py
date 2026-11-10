@@ -24,8 +24,11 @@ class SpokenPart:
     end: float
 
 
+DEFAULT_TTS_MODEL = "gpt-4o-mini-tts-2025-12-15"
+
+
 class OpenAITTS:
-    def __init__(self, model: str = "gpt-4o-mini-tts", voice: str = "alloy", client=None):
+    def __init__(self, model: str = DEFAULT_TTS_MODEL, voice: str = "alloy", client=None):
         self.model = model
         self.voice = voice
         self._client = client

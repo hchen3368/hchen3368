@@ -38,8 +38,9 @@ def main(argv: list[str] | None = None) -> None:
     )
     run.add_argument("--whisper-model", default="base.en")
     run.add_argument("--llm-model", default="gpt-5.4-mini")
-    run.add_argument("--tts-model", default=tts.DEFAULT_TTS_MODEL)
-    run.add_argument("--voice", help="TTS voice; default per language (en: alloy, zh: marin)")
+    run.add_argument("--tts-provider", choices=sorted(tts.PROVIDERS), default="openai")
+    run.add_argument("--tts-model", help="TTS model; default per provider")
+    run.add_argument("--voice", help="TTS voice; default per provider and language")
     run.add_argument("--brand-name", help="Our channel name for the intro (env PD_BRAND_NAME)")
     run.add_argument("--brand-tagline", help="Tagline said before the name (env PD_BRAND_TAGLINE)")
     run.add_argument("--keep-audio", action="store_true", help="Keep the downloaded episode audio")
@@ -47,6 +48,9 @@ def main(argv: list[str] | None = None) -> None:
         "--force", action="store_true",
         help="Recompute transcript, notes, script and digest (downloaded audio and chunks are reused)",
     )
+
+    voices = sub.add_parser("voices", help="List system voices of a TTS provider (MiniMax)")
+    voices.add_argument("--filter", default="", help="Only voices whose id or name contains this")
 
     pub = sub.add_parser(
         "publish",
@@ -84,6 +88,7 @@ def main(argv: list[str] | None = None) -> None:
             video=not args.no_video,
             whisper_model=args.whisper_model,
             llm_model=args.llm_model,
+            tts_provider=args.tts_provider,
             tts_model=args.tts_model,
             tts_voice=args.voice,
             brand_name=args.brand_name,
@@ -97,6 +102,11 @@ def main(argv: list[str] | None = None) -> None:
             print(f"  {name:<22} {path.name}")
         if args.publish:
             _publish([result.workdir])
+    elif args.command == "voices":
+        for v in tts.MiniMaxTTS().list_voices():
+            line = f"{v.get('voice_id')}\t{v.get('voice_name', '')}\t{' '.join(v.get('description') or [])}"
+            if args.filter.lower() in line.lower():
+                print(line)
     elif args.command == "publish":
         _publish(args.episode_dirs)
 

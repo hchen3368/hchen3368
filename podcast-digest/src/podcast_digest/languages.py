@@ -13,7 +13,6 @@ class Language:
     writing_rules: str
     credit_line: str
     tts_instructions: str
-    tts_voice: str
     tts_max_chars: int
     subtitle_max_chars: int
     sentence_split: re.Pattern
@@ -35,7 +34,6 @@ LANGUAGES = {
         ),
         credit_line='End with: "This was a summary of {podcast}. Find the full episode wherever you get podcasts."',
         tts_instructions="Warm, clear podcast narrator. Natural pace, light emphasis on key ideas.",
-        tts_voice="alloy",
         tts_max_chars=3000,
         subtitle_max_chars=42,
         sentence_split=re.compile(r"(?<=[.!?])\s+"),
@@ -62,7 +60,6 @@ LANGUAGES = {
             "句子之间有自然的停顿和换气，语调有起伏，不要播音腔，不要每个字都一样重，"
             "提问的时候带一点好奇的语气。"
         ),
-        tts_voice="marin",
         tts_max_chars=800,
         subtitle_max_chars=20,
         sentence_split=re.compile(r"(?<=[。！？；])|(?<=[.!?])\s+"),

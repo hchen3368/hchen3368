@@ -33,7 +33,8 @@ class Config:
     llm_model: str = "gpt-5.4-mini"
     brand_name: str | None = None
     brand_tagline: str | None = None
-    tts_model: str = tts.DEFAULT_TTS_MODEL
+    tts_provider: str = "openai"
+    tts_model: str | None = None
     tts_voice: str | None = None
     keep_audio: bool = False
     force: bool = False
@@ -101,7 +102,7 @@ def run(
     engines: dict[str, str] = {}
     for code in config.languages:
         language = get_language(code)
-        engine = tts_engine or tts.OpenAITTS(config.tts_model, config.tts_voice or language.tts_voice)
+        engine = tts_engine or tts.build_engine(config.tts_provider, language, config.tts_model, config.tts_voice)
         engines[code] = engine.name
         outputs |= _render_language(episode, config, language, notes, llm, engine, workdir, stage)
 

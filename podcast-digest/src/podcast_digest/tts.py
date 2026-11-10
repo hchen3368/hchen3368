@@ -5,6 +5,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+import os
+
+import requests
+
 from . import audio
 from .languages import LANGUAGES, Language
 
@@ -49,6 +53,74 @@ class OpenAITTS:
         ) as response:
             response.stream_to_file(dest)
         return dest
+
+
+class MiniMaxTTS:
+    """MiniMax T2A v2 (international endpoint). Delivery is set by the voice; instructions are unused."""
+
+    ENDPOINT = "https://api.minimax.io/v1/t2a_v2"
+    VOICES_ENDPOINT = "https://api.minimax.io/v1/get_voice"
+    LANGUAGE_BOOST = {"zh": "Chinese", "en": "English"}
+
+    def __init__(self, model: str = "speech-2.8-hd", voice: str = "", language_code: str = "zh",
+                 speed: float = 1.0, session: requests.Session | None = None):
+        self.model = model
+        self.voice = voice
+        self.language_code = language_code
+        self.speed = speed
+        self._session = session or requests.Session()
+        self.name = f"minimax:{model}:{voice}"
+
+    def synthesize(self, text: str, dest: Path, instructions: str = "") -> Path:
+        body = {
+            "model": self.model,
+            "text": text,
+            "stream": False,
+            "output_format": "hex",
+            "language_boost": self.LANGUAGE_BOOST.get(self.language_code, "auto"),
+            "voice_setting": {"voice_id": self.voice, "speed": self.speed, "vol": 1, "pitch": 0},
+            "audio_setting": {"sample_rate": 32000, "bitrate": 128000, "format": "mp3", "channel": 1},
+        }
+        data = self._post(self.ENDPOINT, body)
+        audio_hex = (data.get("data") or {}).get("audio")
+        if not audio_hex:
+            raise RuntimeError(f"MiniMax returned no audio: {data.get('base_resp')}")
+        dest.write_bytes(bytes.fromhex(audio_hex))
+        return dest
+
+    def list_voices(self) -> list[dict]:
+        data = self._post(self.VOICES_ENDPOINT, {"voice_type": "system"})
+        return data.get("system_voice") or []
+
+    def _post(self, url: str, body: dict) -> dict:
+        response = self._session.post(url, json=body, headers=self._headers(), timeout=120)
+        response.raise_for_status()
+        data = response.json()
+        status = (data.get("base_resp") or {}).get("status_code", 0)
+        if status != 0:
+            raise RuntimeError(f"MiniMax error {status}: {data['base_resp'].get('status_msg')}")
+        return data
+
+    @staticmethod
+    def _headers() -> dict:
+        return {"Authorization": f"Bearer {os.environ.get('MINIMAX_API_KEY', 'proxy-injected')}"}
+
+
+PROVIDERS = {
+    "openai": {"model": DEFAULT_TTS_MODEL, "voices": {"en": "alloy", "zh": "marin"}},
+    "minimax": {"model": "speech-2.8-hd", "voices": {"en": "English_Trustworth_Man", "zh": "Chinese (Mandarin)_Radio_Host"}},
+}
+
+
+def build_engine(provider: str, language: Language, model: str | None = None, voice: str | None = None) -> TTSEngine:
+    if provider not in PROVIDERS:
+        raise ValueError(f"Unknown TTS provider {provider!r}; choose from {sorted(PROVIDERS)}")
+    defaults = PROVIDERS[provider]
+    model = model or defaults["model"]
+    voice = voice or defaults["voices"].get(language.code) or defaults["voices"]["en"]
+    if provider == "minimax":
+        return MiniMaxTTS(model, voice, language.code)
+    return OpenAITTS(model, voice)
 
 
 def render_script(

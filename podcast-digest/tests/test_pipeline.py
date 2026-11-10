@@ -35,7 +35,7 @@ class FakeLLM:
             return "## One-line gist\nNotes."
         if "Translate these notes" in user:
             return "## 一句话总结\n笔记。"
-        if "Simplified Chinese" in system:
+        if "Chinese text-to-speech" in system:
             return "你每天洗冷水澡吗？这是一段中文脚本，用来测试字幕。最后感谢收听。" * 20
         return "This is the script. It has two sentences. " * 45
 
@@ -92,7 +92,7 @@ def test_pipeline_end_to_end_and_caches(tmp_path, monkeypatch, episode):
     config.max_minutes = 4
     pipeline.run(episode, config, llm=llm, tts_engine=FakeTTS())
     assert len(llm.calls) == 3
-    assert "3-4 minutes" in llm.calls[-1] and "Never exceed 600 words" in llm.calls[-1]
+    assert "Hard limit: 600 words." in llm.calls[-1]
 
     config.style = "professional"
     pipeline.run(episode, config, llm=llm, tts_engine=FakeTTS())
@@ -169,7 +169,7 @@ def test_script_over_cap_is_shortened_but_short_one_is_kept():
 
     episode = Episode(podcast_title="Show", title="Ep", audio_url="https://example.com/a.mp3")
     llm = LongThenShortLLM()
-    script = summarize.write_script(llm, episode, "notes")
+    script = summarize.write_script(llm, episode, "notes", max_minutes=5)
     assert len(script.split()) == 400
     assert len(llm.calls) == 2 and "This draft is 900 words; the hard limit is 750 words" in llm.calls[1]
 
@@ -224,3 +224,60 @@ def test_script_starts_with_our_brand_intro(tmp_path, monkeypatch, episode):
     config.brand_name, config.brand_tagline = "我的频道", "三分钟听懂一期好播客。"
     result = pipeline.run(episode, config, llm=llm, tts_engine=FakeTTS())
     assert result.outputs["script.zh"].read_text().startswith("三分钟听懂一期好播客。这里是我的频道。")
+
+
+def test_no_length_target_by_default_and_script_follows_questions():
+    from podcast_digest import summarize
+
+    class Capture:
+        name = "c"
+        calls = []
+
+        def complete(self, system, user):
+            Capture.calls.append(user)
+            return "word " * 5000
+
+    episode = Episode(podcast_title="Show", title="Ep", audio_url="https://example.com/a.mp3")
+    script = summarize.write_script(Capture(), episode, "notes")
+    assert len(script.split()) == 5000 and len(Capture.calls) == 1
+    prompt = Capture.calls[0]
+    assert "Hard limit" not in prompt and "minutes" not in prompt
+    assert "Walk through the questions explored" in prompt and "disagreements" in prompt
+
+
+def test_long_transcripts_are_mapped_by_part_then_merged():
+    from podcast_digest import summarize
+
+    class Capture:
+        name = "c"
+        calls = []
+
+        def complete(self, system, user):
+            Capture.calls.append(user)
+            return f"part notes {len(Capture.calls)}"
+
+    episode = Episode(podcast_title="Show", title="Ep", audio_url="https://example.com/a.mp3")
+    text = "\n".join(f"Speaker: {'word ' * 99}" for _ in range(250))
+    summarize.extract_notes(Capture(), episode, text)
+    parts, final = Capture.calls[:-1], Capture.calls[-1]
+    assert len(parts) == 3 and all("Extract the thinking in this part" in c for c in parts)
+    assert "## Questions explored" in final and "part notes 1" in final and "part notes 3" in final
+
+
+def test_script_prompt_has_spoken_rules_and_context_opening():
+    from podcast_digest import summarize
+    from podcast_digest.languages import LANGUAGES
+
+    class Capture:
+        name = "c"
+        system = user = ""
+
+        def complete(self, system, user):
+            Capture.system, Capture.user = system, user
+            return "稿子。"
+
+    episode = Episode(podcast_title="Show", title="Ep", audio_url="https://example.com/a.mp3")
+    summarize.write_script(Capture(), episode, "notes", LANGUAGES["zh"], "professional")
+    assert "当时他发现" in Capture.system and "Never add the English name" in Capture.system
+    assert "Context hook" in Capture.user and "never add outside news" in Capture.user
+    assert "State the central question plainly" in Capture.user

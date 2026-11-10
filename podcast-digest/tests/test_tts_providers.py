@@ -55,3 +55,13 @@ def test_build_engine_defaults_and_overrides():
 def test_default_provider_and_voice_per_language():
     assert tts.build_engine(None, LANGUAGES["zh"]).name == "minimax:speech-2.8-hd:Chinese (Mandarin)_Warm_Bestie"
     assert tts.build_engine(None, LANGUAGES["en"]).name == f"openai:{tts.DEFAULT_TTS_MODEL}:alloy"
+
+
+def test_voice_aliases_and_rotation():
+    zh = LANGUAGES["zh"]
+    assert tts.build_engine(None, zh, voice="男声").name.endswith("Chinese (Mandarin)_Sincere_Adult")
+    assert tts.build_engine(None, zh, voice="female").name.endswith("Chinese (Mandarin)_Warm_Bestie")
+    picks = {tts.resolve_voice("minimax", "zh", "轮流", f"episode-{i}") for i in range(20)}
+    assert picks == {"Chinese (Mandarin)_Warm_Bestie", "Chinese (Mandarin)_Sincere_Adult"}
+    assert tts.resolve_voice("minimax", "zh", "轮流", "ep-1") == tts.resolve_voice("minimax", "zh", "alternate", "ep-1")
+    assert tts.resolve_voice("minimax", "zh", "custom-id") == "custom-id"

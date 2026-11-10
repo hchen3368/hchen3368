@@ -7,10 +7,8 @@ from .languages import LANGUAGES, Language
 from .llm import LLM
 from .models import Episode
 
-SINGLE_PASS_MAX_WORDS = 120_000
-CHUNK_WORDS = 40_000
-TARGET_MINUTES = (3, 4.5)
-MAX_MINUTES = 5
+SINGLE_PASS_MAX_WORDS = 20_000
+CHUNK_WORDS = 10_000
 DESCRIPTION_MAX_CHARS = 3000
 URL_RE = re.compile(r"https?://\S+")
 TRANSCRIPT_TAG_RE = re.compile(r"</?\s*(transcript(_part)?|description)\s*>", re.IGNORECASE)
@@ -49,32 +47,31 @@ def episode_description(episode: Episode, max_chars: int = DESCRIPTION_MAX_CHARS
 
 def write_script(
     llm: LLM, episode: Episode, notes: str,
-    language: Language = LANGUAGES["en"], style: str = "auto", max_minutes: float = MAX_MINUTES,
+    language: Language = LANGUAGES["en"], style: str = "auto", max_minutes: float | None = None,
     intro: str = "",
 ) -> str:
-    rate = language.units_per_minute
-    low, high, max_length = int(TARGET_MINUTES[0] * rate), int(TARGET_MINUTES[1] * rate), int(max_minutes * rate)
-    system = prompts.SCRIPT_SYSTEM.format(writing_rules=language.writing_rules)
+    max_length = int(max_minutes * language.units_per_minute) if max_minutes else None
+    length_limit = f" Hard limit: {max_length} {language.unit}." if max_length else ""
+    system = prompts.SCRIPT_SYSTEM.format(spoken_rules=language.spoken_rules)
     script = llm.complete(
         system,
         prompts.SCRIPT_USER.format(
-            low=min(low, max_length), high=min(high, max_length), max_length=max_length, unit=language.unit,
-            min_low=min(TARGET_MINUTES[0], max_minutes), min_high=min(TARGET_MINUTES[1], max_minutes),
-            episode=episode.title, podcast=episode.podcast_title, notes=notes,
-            style_rules=prompts.STYLE_RULES[style], intro=intro or "(none)",
+            episode=episode.title, podcast=episode.podcast_title, notes=notes, length_limit=length_limit,
+            opening_rules=prompts.OPENING_RULES.format(style_rule=prompts.STYLE_RULES[style]),
+            intro=intro or "(none)",
             credit_line=language.credit_line.format(podcast=episode.podcast_title),
         ),
     )
     actual = language.length(script) + language.length(intro)
-    if actual > max_length:
+    if max_length and actual > max_length:
         script = llm.complete(
             system,
             prompts.SHORTEN_SCRIPT_USER.format(
-                actual=actual, max_length=max_length, high=min(high, max_length),
-                unit=language.unit, script=script,
+                actual=actual, max_length=max_length, unit=language.unit, script=script,
             ),
         )
-    return f"{intro}\n\n{script.strip()}" if intro else script
+    script = language.polish_spoken(script.strip())
+    return f"{intro}\n\n{script}" if intro else script
 
 
 def translate_notes(llm: LLM, episode: Episode, notes: str, language: Language) -> str:

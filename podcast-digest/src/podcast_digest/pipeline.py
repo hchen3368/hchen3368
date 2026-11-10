@@ -22,7 +22,7 @@ SOCIAL_LANGUAGES = {"zh"}
 @dataclass
 class Config:
     output_dir: Path = Path("output")
-    max_minutes: float = summarize.MAX_MINUTES
+    max_minutes: float | None = None
     languages: list[str] = field(default_factory=lambda: ["zh"])
     style: str = "auto"
     social: bool = True
@@ -102,7 +102,9 @@ def run(
     engines: dict[str, str] = {}
     for code in config.languages:
         language = get_language(code)
-        engine = tts_engine or tts.build_engine(config.tts_provider, language, config.tts_model, config.tts_voice)
+        engine = tts_engine or tts.build_engine(
+            config.tts_provider, language, config.tts_model, config.tts_voice, rotation_key=episode.key
+        )
         engines[code] = engine.name
         outputs |= _render_language(episode, config, language, notes, llm, engine, workdir, stage)
 
@@ -142,8 +144,9 @@ def _render_language(
         script_path = stage.text(
             workdir / f"script.{code}.txt",
             fingerprint(llm.name, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER, prompts.SHORTEN_SCRIPT_USER,
+                        prompts.OPENING_RULES,
                         prompts.STYLE_RULES[config.style],
-                        language, summarize.TARGET_MINUTES, config.max_minutes, notes, intro),
+                        language, config.max_minutes, notes, intro),
             lambda: summarize.write_script(llm, episode, notes, language, config.style, config.max_minutes, intro),
         )
     outputs[f"script.{code}"] = script_path

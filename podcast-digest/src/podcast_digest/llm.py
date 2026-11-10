@@ -38,13 +38,23 @@ class OpenAILLM:
         kwargs = {"model": self.model, "instructions": system, "input": user, **extra}
         if self.reasoning_effort and is_reasoning_model(self.model):
             kwargs["reasoning"] = {"effort": self.reasoning_effort}
-        response = self.client.responses.create(**kwargs)
+        response = self._stream(kwargs)
         if response.status != "completed":
             raise RuntimeError(f"{self.name} response {response.status}: {response.incomplete_details}")
         text = response.output_text.strip()
         if not text:
             raise RuntimeError(f"{self.name} returned an empty response")
         return text
+
+    def _stream(self, kwargs: dict):
+        """Streams so long generations keep the connection busy instead of timing out at a gateway."""
+        final = None
+        for event in self.client.responses.create(**kwargs, stream=True):
+            if event.type in ("response.completed", "response.incomplete", "response.failed"):
+                final = event.response
+        if final is None:
+            raise RuntimeError(f"{self.name} stream ended without a final response")
+        return final
 
 
 def is_reasoning_model(model: str) -> bool:

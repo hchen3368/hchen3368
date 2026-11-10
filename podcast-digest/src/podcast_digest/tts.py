@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+import hashlib
 import os
 
 import requests
@@ -107,23 +108,47 @@ class MiniMaxTTS:
 
 
 PROVIDERS = {
-    "openai": {"model": DEFAULT_TTS_MODEL, "voices": {"en": "alloy", "zh": "marin"}},
-    "minimax": {"model": "speech-2.8-hd", "voices": {"en": "English_Trustworth_Man", "zh": "Chinese (Mandarin)_Warm_Bestie"}},
+    "openai": {
+        "model": DEFAULT_TTS_MODEL,
+        "voices": {"en": {"female": "coral", "male": "alloy"}, "zh": {"female": "marin", "male": "cedar"}},
+        "default": {"en": "male", "zh": "female"},
+    },
+    "minimax": {
+        "model": "speech-2.8-hd",
+        "voices": {
+            "en": {"female": "English_Graceful_Lady", "male": "English_Trustworth_Man"},
+            "zh": {"female": "Chinese (Mandarin)_Warm_Bestie", "male": "Chinese (Mandarin)_Sincere_Adult"},
+        },
+        "default": {"en": "male", "zh": "female"},
+    },
 }
 DEFAULT_PROVIDERS = {"zh": "minimax", "en": "openai"}
+VOICE_ALIASES = {"female": "female", "女": "female", "女声": "female", "male": "male", "男": "male", "男声": "male"}
+ROTATE = {"alternate", "轮流"}
 
 
 def build_engine(provider: str | None, language: Language, model: str | None = None,
-                 voice: str | None = None) -> TTSEngine:
+                 voice: str | None = None, rotation_key: str = "") -> TTSEngine:
     provider = provider or DEFAULT_PROVIDERS.get(language.code, "openai")
     if provider not in PROVIDERS:
         raise ValueError(f"Unknown TTS provider {provider!r}; choose from {sorted(PROVIDERS)}")
     defaults = PROVIDERS[provider]
     model = model or defaults["model"]
-    voice = voice or defaults["voices"].get(language.code) or defaults["voices"]["en"]
+    voice = resolve_voice(provider, language.code, voice, rotation_key)
     if provider == "minimax":
         return MiniMaxTTS(model, voice, language.code)
     return OpenAITTS(model, voice)
+
+
+def resolve_voice(provider: str, code: str, voice: str | None, rotation_key: str = "") -> str:
+    """Accepts a concrete voice id, an alias (female/male/女声/男声), 'alternate'/'轮流', or nothing."""
+    table = PROVIDERS[provider]
+    voices = table["voices"].get(code) or table["voices"]["en"]
+    if voice in ROTATE:
+        roles = sorted(voices)
+        voice = roles[int(hashlib.sha1(rotation_key.encode()).hexdigest(), 16) % len(roles)]
+    role = VOICE_ALIASES.get(voice or table["default"].get(code, "female"))
+    return voices[role] if role else voice
 
 
 def render_script(

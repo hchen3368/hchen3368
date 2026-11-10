@@ -118,3 +118,8 @@ def test_social_post_unescapes_double_escaped_newlines():
     post = social_post(EscapingLLM(), Episode(podcast_title="p", title="t", audio_url="https://x/a.mp3"), "n")
     assert post["body"] == "第一段\n\n第二段"
     assert post["cards"][0]["points"] == ["a\nb"]
+
+
+def test_spoken_polish_removes_comma_after_sentence_openers():
+    text = "最近，AI 很强。当时，他发现问题。其实，这很难！他说最近，天气不错。"
+    assert ZH.polish_spoken(text) == "最近AI 很强。当时他发现问题。其实这很难！他说最近，天气不错。"

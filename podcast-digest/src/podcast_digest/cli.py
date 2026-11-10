@@ -23,8 +23,8 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument("podcast", help="RSS feed URL or search term")
     run.add_argument("--episode", type=int, default=0, help="Index in the feed (0 = latest)")
     run.add_argument("--title-contains", help="Pick the first episode whose title contains this")
-    run.add_argument("--max-minutes", type=float, default=5,
-                     help="Hard cap on digest length; scripts aim for 3-4.5 minutes")
+    run.add_argument("--max-minutes", type=float,
+                     help="Optional hard cap on digest length; by default length follows content")
     run.add_argument("--language", default="zh", help="Comma-separated output languages (default zh), e.g. zh,en")
     run.add_argument("--style", choices=pipeline.STYLES, default="auto",
                      help="Digest opening: hook (relatable question), professional, or auto")
@@ -41,7 +41,7 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument("--tts-provider", choices=sorted(tts.PROVIDERS),
                      help="Speech provider; default per language (zh: minimax, en: openai)")
     run.add_argument("--tts-model", help="TTS model; default per provider")
-    run.add_argument("--voice", help="TTS voice; default per provider and language")
+    run.add_argument("--voice", help="Voice id, or 女声/男声 (female/male), or 轮流/alternate to rotate by episode; default 女声")
     run.add_argument("--brand-name", help="Our channel name for the intro (env PD_BRAND_NAME)")
     run.add_argument("--brand-tagline", help="Tagline said before the name (env PD_BRAND_TAGLINE)")
     run.add_argument("--keep-audio", action="store_true", help="Keep the downloaded episode audio")

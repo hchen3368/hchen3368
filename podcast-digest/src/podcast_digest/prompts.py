@@ -116,20 +116,30 @@ STYLE_RULES = {
     ),
 }
 
-SCRIPT_USER = """Write the audio digest script for the episode "{episode}" of the podcast "{podcast}",
+SCRIPT_USER = """Write the audio script for the episode "{episode}" of the podcast "{podcast}",
 based on these notes.
 
-Goal: a listener who skips the original should still come away with most of its thinking: the
-questions it asks, the answers the guests give and why, where they disagree, and the expert
-insights that make the episode worth hearing. Length follows content: as long as it takes to carry
-that, and no longer. Cut repetition, filler and anything that is not substance.{length_limit}
+{goal}{length_limit}
 
 The audio already starts with our channel's intro, which is added separately: "{intro}"
 Do not repeat or rephrase it; your script continues right after it.
 
 {opening_rules}
 
-Then:
+{body}
+
+Notes:
+{notes}"""
+
+SCRIPT_FORMATS = {
+    "digest": {
+        "goal": (
+            "Goal: a listener who skips the original should still come away with most of its thinking: "
+            "the questions it asks, the answers the guests give and why, where they disagree, and the "
+            "expert insights that make the episode worth hearing. Length follows content: as long as it "
+            "takes to carry that, and no longer. Cut repetition, filler and anything that is not substance."
+        ),
+        "body": """Then:
 1. Walk through the questions explored, in an order that builds understanding. For each one:
    pose the question plainly; give the guests' answers with their reasoning and the evidence or
    examples they use, naming who says what; make disagreements and tensions explicit (e.g. "X
@@ -137,10 +147,28 @@ Then:
    brief transition.
 2. Practical takeaways, if the episode gives any.
 3. If important questions are left open, say so in a sentence or two.
-4. {credit_line}
-
-Notes:
-{notes}"""
+4. {credit_line}""",
+    },
+    "qa": {
+        "goal": (
+            "Goal: turn the notes' Questions explored section into spoken audio that keeps its "
+            "question-and-answer structure and nearly all of its information. This is a faithful spoken "
+            "rendering, not a further summary: keep every question and every substantive answer, with the "
+            "reasoning, numbers, examples, tensions and insights. Change only how it is said."
+        ),
+        "body": """Then:
+1. Go through the questions in the notes' order. Introduce each one as a natural spoken question
+   in plain words (e.g. 第一个问题是…… / 接下来一个问题…… / 那……又是怎么回事呢), never as a heading.
+2. Answer it the way a host explains to a curious friend: who says what, why, and with which
+   evidence, numbers or examples. Make tensions explicit and point out the insight
+   (e.g. 这里有意思的是……).
+3. Turn the notes' bullet points into connected spoken sentences. Never read them out as a list,
+   and do not number points mechanically (no 第一点、第二点).
+4. After the questions, briefly cover the notes' other notable insights and practical takeaways,
+   then the open questions.
+5. {credit_line}""",
+    },
+}
 
 SHORTEN_SCRIPT_USER = """This draft is {actual} {unit}; the hard limit is {max_length} {unit}.
 Shorten it to fit by cutting the least essential material first (minor examples, side points),

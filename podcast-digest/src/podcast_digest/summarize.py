@@ -48,7 +48,7 @@ def episode_description(episode: Episode, max_chars: int = DESCRIPTION_MAX_CHARS
 def write_script(
     llm: LLM, episode: Episode, notes: str,
     language: Language = LANGUAGES["en"], style: str = "auto", max_minutes: float | None = None,
-    intro: str = "", target_minutes: float | None = None,
+    intro: str = "", target_minutes: float | None = None, script_format: str = "digest",
 ) -> str:
     rate = language.units_per_minute
     max_length = int(max_minutes * rate) if max_minutes else None
@@ -63,13 +63,16 @@ def write_script(
     if max_length:
         length_limit += f" Hard limit: {max_length} {language.unit}."
     system = prompts.SCRIPT_SYSTEM.format(spoken_rules=language.spoken_rules)
+    credit_line = language.credit_line.format(podcast=episode.podcast_title)
+    script_format_rules = prompts.SCRIPT_FORMATS[script_format]
     script = llm.complete(
         system,
         prompts.SCRIPT_USER.format(
             episode=episode.title, podcast=episode.podcast_title, notes=notes, length_limit=length_limit,
+            goal=script_format_rules["goal"],
+            body=script_format_rules["body"].format(credit_line=credit_line),
             opening_rules=prompts.OPENING_RULES.format(style_rule=prompts.STYLE_RULES[style]),
             intro=intro or "(none)",
-            credit_line=language.credit_line.format(podcast=episode.podcast_title),
         ),
     )
     actual = language.length(script) + language.length(intro)

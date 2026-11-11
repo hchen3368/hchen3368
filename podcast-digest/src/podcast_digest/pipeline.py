@@ -24,6 +24,7 @@ class Config:
     output_dir: Path = Path("output")
     max_minutes: float | None = None
     target_minutes: float | None = None
+    script_format: str = "digest"
     languages: list[str] = field(default_factory=lambda: ["zh"])
     style: str = "auto"
     social: bool = True
@@ -41,6 +42,8 @@ class Config:
     force: bool = False
 
     def __post_init__(self):
+        if self.script_format not in prompts.SCRIPT_FORMATS:
+            raise ValueError(f"Unknown script format {self.script_format!r}; choose from {sorted(prompts.SCRIPT_FORMATS)}")
         if self.style not in STYLES:
             raise ValueError(f"Unknown style {self.style!r}; choose from {STYLES}")
         for code in self.languages:
@@ -145,11 +148,12 @@ def _render_language(
         script_path = stage.text(
             workdir / f"script.{code}.txt",
             fingerprint(llm.name, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER, prompts.SHORTEN_SCRIPT_USER,
-                        prompts.OPENING_RULES,
+                        prompts.OPENING_RULES, prompts.SCRIPT_FORMATS[config.script_format],
                         prompts.STYLE_RULES[config.style],
                         language, config.max_minutes, config.target_minutes, notes, intro),
             lambda: summarize.write_script(
-                llm, episode, notes, language, config.style, config.max_minutes, intro, config.target_minutes
+                llm, episode, notes, language, config.style, config.max_minutes, intro, config.target_minutes,
+                config.script_format,
             ),
         )
     outputs[f"script.{code}"] = script_path

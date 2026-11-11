@@ -300,3 +300,24 @@ def test_target_minutes_is_soft_guidance_only():
     assert len(Capture.calls) == 1 and len(script) == 9000
     assert "Aim for about 10 minutes spoken (roughly 2320-3480 characters)" in Capture.calls[0]
     assert "Hard limit" not in Capture.calls[0]
+
+
+def test_qa_script_format_keeps_notes_structure():
+    from podcast_digest import summarize
+    from podcast_digest.languages import LANGUAGES
+
+    class Capture:
+        name = "c"
+        user = ""
+
+        def complete(self, system, user):
+            Capture.user = user
+            return "稿子。"
+
+    episode = Episode(podcast_title="Show", title="Ep", audio_url="https://example.com/a.mp3")
+    summarize.write_script(Capture(), episode, "notes", LANGUAGES["zh"], script_format="qa")
+    assert "faithful spoken rendering, not a further summary" in Capture.user
+    assert "第一个问题是" in Capture.user and "本期内容整理自英文播客《Show》" in Capture.user
+    assert "Walk through the questions explored" not in Capture.user
+    with pytest.raises(ValueError):
+        pipeline.Config(script_format="essay")

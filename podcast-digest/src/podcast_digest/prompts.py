@@ -178,8 +178,11 @@ For each one:
 2. The views: who says what, why, and with which evidence, numbers or examples, as connected
    spoken sentences; make disagreements explicit.
 3. The insight: the non-obvious takeaway, in one or two sentences (e.g. 这里真正值得记住的是……).
-Vary the transitions so the pattern never feels mechanical, and never number points
-(no 第一点、第二点). After the questions, briefly cover the notes' other notable insights and
+Start each question section on its own line with a numbered marker followed by the question:
+问题一：…… 问题二：…… (English: Question 1: …). Start the wrap-up on its own line with 结语：
+(English: Wrap-up:). These markers are read aloud and drive the video slides, so use them exactly.
+Vary the transitions so the pattern never feels mechanical, and never number points inside a
+section (no 第一点、第二点). In the wrap-up, briefly cover the notes' other notable insights and
 practical takeaways, then the open questions. Finally: {credit_line}""",
     },
 }
@@ -265,5 +268,39 @@ SOCIAL_SCHEMA = {
         "bilibili_title": {"type": "string"},
         "bilibili_description": {"type": "string"},
         "bilibili_tags": {"type": "array", "items": {"type": "string"}},
+    },
+}
+
+SLIDES_SYSTEM = """You prepare on-screen text for video slides that accompany a narrated script.
+Use only wording and facts from the given sections; never add new facts. Write in the script's language."""
+
+SLIDES_USER = """For each section below, return:
+- label: the section label exactly as given.
+- question: the question that opens the section, as shown on screen. Keep the narrator's wording;
+  trim only if it is longer than 45 characters. For a wrap-up section, a short heading for it.
+- insight: the single most important or most striking line of that section, at most 36 characters,
+  taken from the section text with only light trimming.
+
+Sections:
+{sections}"""
+
+SLIDES_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["slides"],
+    "properties": {
+        "slides": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["label", "question", "insight"],
+                "properties": {
+                    "label": {"type": "string"},
+                    "question": {"type": "string"},
+                    "insight": {"type": "string"},
+                },
+            },
+        },
     },
 }

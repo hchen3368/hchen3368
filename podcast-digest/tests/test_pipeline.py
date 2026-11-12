@@ -1,4 +1,5 @@
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -41,6 +42,9 @@ class FakeLLM:
 
     def complete_json(self, system, user, name, schema):
         self.calls.append(user)
+        if name == "slides":
+            labels = re.findall(r"^\[(.+?)\]$", user, re.M)
+            return {"slides": [{"label": l, "question": f"{l}的问题？", "insight": f"{l}的洞见。"} for l in labels]}
         return POST
 
 
@@ -326,3 +330,40 @@ def test_qa_script_format_keeps_notes_structure():
     assert "Walk through the questions explored" not in Capture.user
     with pytest.raises(ValueError):
         pipeline.Config(script_format="essay")
+
+
+APPROVED = """与最优秀的思想并肩。这里是长话短听。
+
+开场背景。今天我们探讨的内容来自某节目。
+
+问题一：第一个问题是什么？
+这是第一个回答。这里真正值得记住的是第一点。
+
+问题二：第二个问题又是什么？
+这是第二个回答。
+
+结语：最后总结一下。本期内容整理自英文播客《Show》，完整内容请收听原节目。
+"""
+
+
+def test_approved_script_becomes_section_aligned_slideshow(tmp_path, monkeypatch, episode):
+    monkeypatch.setattr(pipeline, "build_transcript_sources", lambda config: [FakeSource()])
+    script_file = tmp_path / "approved.txt"
+    script_file.write_text(APPROVED)
+    config = pipeline.Config(output_dir=tmp_path / "out", languages=["zh"], social=False, script_file=script_file)
+    result = pipeline.run(episode, config, llm=FakeLLM(), tts_engine=FakeTTS())
+    workdir = result.workdir
+
+    assert result.outputs["script.zh"].read_text() == APPROVED.strip() + "\n"
+    slides = json.loads((workdir / "slides.zh.json").read_text())
+    assert [s["label"] for s in slides] == ["问题一", "问题二", "结语"]
+    assert sorted(p.name for p in (workdir / "slides_zh").glob("*.png")) == ["01.png", "02.png", "03.png"]
+
+    timeline = [tts.SpokenPart(**p) for p in json.loads((workdir / "timeline.zh.json").read_text())]
+    starts = tts.section_starts(timeline)
+    assert len(starts) == 4 and starts[0] == 0 and starts == sorted(starts)
+    digest_seconds = result.meta["durations_seconds"]["digest.zh"]
+    assert abs(timeline[-1].end - digest_seconds) < 0.15
+    probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
+                            str(result.outputs["video.zh"])], check=True, capture_output=True, text=True)
+    assert abs(float(probe.stdout) - digest_seconds) < 0.5

@@ -86,7 +86,7 @@ LANGUAGES = {
             "(5) Short, spoken sentences; spoken connectors are welcome but do not pile up filler words; "
             "avoid written or translated phrasing such as 进而、与此同时、其核心观点在于、值得注意的是."
         ),
-        credit_line="结尾说明：本期内容整理自英文播客《{podcast}》，完整内容请收听原节目。",
+        credit_line='End with exactly: "本期内容整理自英文播客《{podcast}》，完整内容请收听原节目。"',
         tts_instructions=(
             "你是一位中文播客主持人，正在跟朋友聊天。用自然、放松的普通话说，语速有快有慢，"
             "句子之间有自然的停顿和换气，语调有起伏，不要播音腔，不要每个字都一样重，"

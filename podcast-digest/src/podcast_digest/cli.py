@@ -27,6 +27,8 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument("--title-contains", help="Pick the first episode whose title contains this")
     run.add_argument("--script-format", choices=["digest", "qa"], default="digest",
                      help="digest: condensed walk-through; qa: spoken version of the notes' question map")
+    run.add_argument("--script-file", type=Path,
+                     help="Use this approved script instead of generating one")
     run.add_argument("--context", default="",
                      help="Editor-verified background facts the opening may use (e.g. a dated milestone)")
     run.add_argument("--target-minutes", type=float,
@@ -125,6 +127,7 @@ def main(argv: list[str] | None = None) -> None:
             target_minutes=args.target_minutes,
             script_format=args.script_format,
             context=args.context,
+            script_file=args.script_file,
             transcript_sources=[s.strip() for s in args.transcript_sources.split(",") if s.strip()],
             languages=[s.strip() for s in args.language.split(",") if s.strip()],
             style=args.style,

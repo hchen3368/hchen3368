@@ -141,6 +141,35 @@ def render_cover(dest: Path, title: str, subtitle: str, podcast: str, episode: s
     return dest
 
 
+def render_question_slide(dest: Path, label: str, question: str, insight: str, podcast: str,
+                          theme: Theme, brand: str = "", insight_label: str = "洞见",
+                          size=LANDSCAPE) -> Path:
+    """One 16:9 slide per section: the label, the question, and one key insight. The bottom fifth is
+    left empty for burned-in subtitles."""
+    image, image_draw, _ = _pil()
+    img = image.new("RGB", size, theme.background)
+    draw = image_draw.Draw(img)
+    w, h = size
+    margin = int(w * 0.08)
+    content_bottom = int(h * 0.78)
+    draw.rectangle((0, 0, w, 18), fill=theme.accent)
+    y = _pill(draw, margin, int(h * 0.08), label, theme, size=40)
+    q_font, q_lines = _fit(draw, question, "bold", 76, w - 2 * margin, 3, min_size=44)
+    y = _draw_lines(draw, q_lines, q_font, margin, y + 50, theme.text, 1.3) + 30
+    if insight:
+        box_top = y + 10
+        i_font, i_lines = _fit(draw, insight, "regular", 50, w - 2 * margin - 120, 3, min_size=32)
+        box_bottom = min(box_top + 90 + len(i_lines) * int(i_font.size * 1.45), content_bottom)
+        draw.rounded_rectangle((margin, box_top, w - margin, box_bottom), radius=28, fill=theme.panel)
+        draw.rectangle((margin, box_top, margin + 12, box_bottom), fill=theme.accent)
+        draw.text((margin + 50, box_top + 24), insight_label, font=font("bold", 30), fill=theme.accent)
+        _draw_lines(draw, i_lines, i_font, margin + 50, box_top + 70, theme.text, 1.45)
+    foot = font("regular", 28)
+    draw.text((margin, content_bottom + 10), f"{brand}  ·  来源：{podcast}"[:80], font=foot, fill=theme.muted)
+    img.save(dest)
+    return dest
+
+
 def render_card(dest: Path, number: int, page: int, total: int, heading: str, points: list[str],
                 podcast: str, theme: Theme, size=PORTRAIT) -> Path:
     image, image_draw, _ = _pil()

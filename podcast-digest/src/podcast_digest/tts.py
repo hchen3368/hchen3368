@@ -12,6 +12,7 @@ import requests
 
 from . import audio
 from .languages import LANGUAGES, Language
+from .sections import split_sections
 
 MAX_CHARS_PER_REQUEST = 3000
 
@@ -27,6 +28,7 @@ class SpokenPart:
     text: str
     start: float
     end: float
+    section: int = 0
 
 
 DEFAULT_TTS_MODEL = "gpt-4o-mini-tts-2025-12-15"
@@ -154,19 +156,30 @@ def resolve_voice(provider: str, code: str, voice: str | None, rotation_key: str
 def render_script(
     engine: TTSEngine, script: str, dest: Path, language: Language = LANGUAGES["en"]
 ) -> list[SpokenPart]:
+    """Synthesizes section by section so every section starts on a part boundary; returns a timeline
+    scaled to the final file's real duration so slides and subtitles stay in sync."""
     parts_dir = dest.parent / f"tts_parts_{language.code}"
     parts_dir.mkdir(parents=True, exist_ok=True)
     files: list[Path] = []
     timeline: list[SpokenPart] = []
     cursor = 0.0
-    for i, chunk in enumerate(split_text(script, language.tts_max_chars, language.sentence_split)):
-        part = engine.synthesize(chunk, parts_dir / f"part_{i:03d}.mp3", language.tts_instructions)
-        length = audio.duration_seconds(part)
-        timeline.append(SpokenPart(chunk, cursor, cursor + length))
-        files.append(part)
-        cursor += length
+    for index, section in enumerate(split_sections(script)):
+        for chunk in split_text(section.text, language.tts_max_chars, language.sentence_split):
+            part = engine.synthesize(chunk, parts_dir / f"part_{len(files):03d}.mp3", language.tts_instructions)
+            length = audio.duration_seconds(part)
+            timeline.append(SpokenPart(chunk, cursor, cursor + length, index))
+            files.append(part)
+            cursor += length
     audio.concat_and_normalize(files, dest)
-    return timeline
+    scale = audio.duration_seconds(dest) / cursor if cursor else 1.0
+    return [SpokenPart(p.text, p.start * scale, p.end * scale, p.section) for p in timeline]
+
+
+def section_starts(timeline: list[SpokenPart]) -> list[float]:
+    starts: dict[int, float] = {}
+    for part in timeline:
+        starts.setdefault(part.section, part.start)
+    return [starts[i] for i in sorted(starts)]
 
 
 def split_text(

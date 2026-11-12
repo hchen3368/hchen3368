@@ -91,6 +91,17 @@ def write_script(
     return f"{intro}\n\n{script}" if intro else script
 
 
+def slide_points(llm: LLM, sections: list) -> list[dict]:
+    """Picks the on-screen question and one key insight for every section after the opening."""
+    body = "\n\n".join(f"[{s.label}]\n{s.text}" for s in sections)
+    result = _unescape_newlines(llm.complete_json(
+        prompts.SLIDES_SYSTEM, prompts.SLIDES_USER.format(sections=body),
+        name="slides", schema=prompts.SLIDES_SCHEMA,
+    ))
+    by_label = {item["label"]: item for item in result["slides"]}
+    return [by_label.get(s.label, {"label": s.label, "question": s.heading, "insight": ""}) for s in sections]
+
+
 def spoken_duration(seconds: int | None) -> str:
     if not seconds:
         return "(unknown length)"

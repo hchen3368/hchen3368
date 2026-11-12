@@ -12,6 +12,7 @@ from .files import Stamps, fingerprint, write_text_atomic
 from .languages import STYLES, Language, get_language
 from .llm import LLM, OpenAILLM
 from .models import Episode, slugify
+from .sections import split_sections
 
 log = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ class Config:
     target_minutes: float | None = None
     script_format: str = "digest"
     context: str = ""
+    script_file: Path | None = None
     languages: list[str] = field(default_factory=lambda: ["zh"])
     style: str = "auto"
     social: bool = True
@@ -149,30 +151,36 @@ def _render_language(
                 fingerprint(llm.name, prompts.TRANSLATE_NOTES_SYSTEM, prompts.TRANSLATE_NOTES_USER, notes, language),
                 lambda: summarize.translate_notes(llm, episode, notes, language),
             )
-        script_path = stage.text(
-            workdir / f"script.{code}.txt",
-            fingerprint(script_llm.name, config.script_reasoning_effort, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER,
-                        prompts.SHORTEN_SCRIPT_USER,
-                        prompts.OPENING_RULES, prompts.SCRIPT_FORMATS[config.script_format], config.context,
-                        prompts.STYLE_RULES[config.style],
-                        language, config.max_minutes, config.target_minutes, notes, intro),
-            lambda: summarize.write_script(
-                script_llm, episode, notes, language, config.style, config.max_minutes, intro, config.target_minutes,
-                config.script_format, config.context,
-            ),
-        )
+        script_path = workdir / f"script.{code}.txt"
+        if config.script_file:
+            approved = Path(config.script_file).read_text().strip() + "\n"
+            stage.text(script_path, fingerprint("approved", approved), lambda: approved)
+        else:
+            script_fp = fingerprint(
+                script_llm.name, config.script_reasoning_effort, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER,
+                prompts.SHORTEN_SCRIPT_USER, prompts.OPENING_RULES, prompts.SCRIPT_FORMATS[config.script_format],
+                config.context, prompts.STYLE_RULES[config.style], language, config.max_minutes,
+                config.target_minutes, notes, intro,
+            )
+            stage.text(script_path, script_fp, lambda: summarize.write_script(
+                script_llm, episode, notes, language, config.style, config.max_minutes, intro,
+                config.target_minutes, config.script_format, config.context,
+            ))
     outputs[f"script.{code}"] = script_path
     script = script_path.read_text()
 
     digest_path = workdir / f"digest.{code}.mp3"
     srt_path = workdir / f"subtitles.{code}.srt"
+    timeline_path = workdir / f"timeline.{code}.json"
     with stage.timed(f"tts.{code}"):
-        digest_fp = fingerprint(tts_engine.name, language.tts_instructions, language.subtitle_max_chars, script)
-        if not (stage.fresh(digest_path, digest_fp) and stage.fresh(srt_path, digest_fp)):
+        digest_fp = fingerprint(tts_engine.name, language.tts_instructions, language.subtitle_max_chars, script,
+                                "sections-v1")
+        if not all(stage.fresh(p, digest_fp) for p in (digest_path, srt_path, timeline_path)):
             timeline = tts.render_script(tts_engine, script, digest_path, language)
             write_text_atomic(srt_path, subtitles.to_srt(subtitles.build_cues(timeline, language)))
-            stage.record(digest_path, digest_fp)
-            stage.record(srt_path, digest_fp)
+            write_text_atomic(timeline_path, json.dumps([asdict(p) for p in timeline], ensure_ascii=False))
+            for path in (digest_path, srt_path, timeline_path):
+                stage.record(path, digest_fp)
     outputs[f"digest.{code}"] = digest_path
     outputs[f"subtitles.{code}"] = srt_path
 
@@ -186,7 +194,7 @@ def _render_language(
     if config.video:
         with stage.timed(f"video.{code}"):
             outputs[f"video.{code}"] = _render_video(episode, config, code, post, digest_path, srt_path,
-                                                     digest_fp, workdir, stage, brand)
+                                                     digest_fp, workdir, stage, brand, script, llm)
     return outputs
 
 
@@ -216,18 +224,40 @@ def _render_social(episode, config, language, localized_notes_path, notes, llm, 
     return post, {f"post.xhs.{code}": xhs, f"post.bilibili.{code}": bili, f"cards.{code}": cards_dir}
 
 
-def _render_video(episode, config, code, post, digest_path, srt_path, digest_fp, workdir, stage, brand) -> Path:
+def _render_video(episode, config, code, post, digest_path, srt_path, digest_fp, workdir, stage, brand,
+                  script, llm) -> Path:
     title = post["cover_title"] if post else episode.podcast_title
     subtitle = post["cover_subtitle"] if post else episode.title
     frame = workdir / f"frame.{code}.png"
     video_path = workdir / f"video.{code}.mp4"
-    video_fp = fingerprint(digest_fp, title, subtitle, config.style, brand, "video-v2")
+    theme = cards.theme_for(config.style)
+    sections = split_sections(script)
+    slides_path = workdir / f"slides.{code}.json"
+    if len(sections) > 1:
+        stage.text(slides_path, fingerprint(llm.name, prompts.SLIDES_SYSTEM, prompts.SLIDES_USER, script),
+                   lambda: json.dumps(summarize.slide_points(llm, sections[1:]), ensure_ascii=False, indent=2))
+    slide_points = json.loads(slides_path.read_text()) if len(sections) > 1 else []
+    video_fp = fingerprint(digest_fp, title, subtitle, config.style, brand, slide_points, "video-v3")
     if not stage.fresh(video_path, video_fp):
         footer = "AI 辅助整理 · 内容来自原节目" if code == "zh" else "AI-assisted summary of the original episode"
-        cards.render_cover(frame, title, subtitle, episode.podcast_title, episode.title,
-                           cards.theme_for(config.style), brand=brand.name, size=cards.LANDSCAPE, footer=footer,
+        cards.render_cover(frame, title, subtitle, episode.podcast_title, episode.title, theme,
+                           brand=brand.name, size=cards.LANDSCAPE, footer=footer,
                            source_prefix="来源：" if code == "zh" else "Source: ")
-        video.render_video(frame, digest_path, srt_path, video_path)
+        if slide_points:
+            slides_dir = workdir / f"slides_{code}"
+            shutil.rmtree(slides_dir, ignore_errors=True)
+            slides_dir.mkdir()
+            images = [frame] + [
+                cards.render_question_slide(slides_dir / f"{i:02d}.png", point["label"], point["question"],
+                                            point["insight"], episode.podcast_title, theme, brand=brand.name,
+                                            insight_label="洞见" if code == "zh" else "Insight")
+                for i, point in enumerate(slide_points, start=1)
+            ]
+            timeline = [tts.SpokenPart(**p) for p in json.loads((workdir / f"timeline.{code}.json").read_text())]
+            starts = tts.section_starts(timeline)
+            video.render_slideshow(list(zip(images, starts)), digest_path, srt_path, video_path)
+        else:
+            video.render_video(frame, digest_path, srt_path, video_path)
         stage.record(video_path, video_fp)
     return video_path
 

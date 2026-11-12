@@ -141,6 +141,54 @@ def render_cover(dest: Path, title: str, subtitle: str, podcast: str, episode: s
     return dest
 
 
+THUMB = {"background": "#0B1220", "text": "#FFFFFF", "muted": "#9AA7B8", "highlight": "#FFD23F", "pill": "#FFD23F"}
+
+
+def render_thumbnail(dest: Path, title: str, subtitle: str, highlight: str = "", brand: str = "",
+                     tag: str = "", size=LANDSCAPE) -> Path:
+    """High-contrast 16:9 cover for feeds: dark background, huge title with one highlighted phrase."""
+    image, image_draw, _ = _pil()
+    img = image.new("RGB", size, THUMB["background"])
+    draw = image_draw.Draw(img)
+    w, h = size
+    margin = int(w * 0.07)
+    if brand:
+        fnt = font("bold", 40)
+        pw = draw.textlength(brand, font=fnt)
+        draw.rounded_rectangle((margin, 70, margin + pw + 56, 70 + 74), radius=37, fill=THUMB["pill"])
+        draw.text((margin + 28, 70 + 37), brand, font=fnt, fill=THUMB["background"], anchor="lm")
+    manual = [part for part in title.split("\n") if part]
+    title_font, lines = _fit(draw, title.replace("\n", ""), "bold", 190, w - 2 * margin, 2, min_size=110)
+    if len(manual) > 1:
+        size = 190
+        while size > 100 and max(draw.textlength(t, font=font("bold", size)) for t in manual) > w - 2 * margin:
+            size -= 6
+        title_font, lines = font("bold", size), manual
+    sub_font, sub_lines = _fit(draw, subtitle, "bold", 68, w - 2 * margin, 2, min_size=44)
+    step = int(title_font.size * 1.18)
+    block = len(lines) * step + 40 + len(sub_lines) * int(sub_font.size * 1.3)
+    top, bottom = 170, h - 130
+    y = top + max((bottom - top - block) // 2, 0)
+    for line in lines:
+        x = margin
+        for segment, hot in _split_highlight(line, highlight):
+            draw.text((x, y), segment, font=title_font, fill=THUMB["highlight"] if hot else THUMB["text"])
+            x += draw.textlength(segment, font=title_font)
+        y += step
+    _draw_lines(draw, sub_lines, sub_font, margin, y + 40, THUMB["muted"], 1.3)
+    if tag:
+        draw.text((margin, h - 110), tag, font=font("regular", 34), fill=THUMB["muted"])
+    img.save(dest)
+    return dest
+
+
+def _split_highlight(line: str, highlight: str) -> list[tuple[str, bool]]:
+    if not highlight or highlight not in line:
+        return [(line, False)]
+    before, _, after = line.partition(highlight)
+    return [(t, hot) for t, hot in ((before, False), (highlight, True), (after, False)) if t]
+
+
 def render_question_slide(dest: Path, label: str, question: str, insight: str, podcast: str,
                           theme: Theme, brand: str = "", insight_label: str = "洞见",
                           size=LANDSCAPE) -> Path:

@@ -49,6 +49,7 @@ def write_script(
     llm: LLM, episode: Episode, notes: str,
     language: Language = LANGUAGES["en"], style: str = "auto", max_minutes: float | None = None,
     intro: str = "", target_minutes: float | None = None, script_format: str = "digest",
+    context: str = "",
 ) -> str:
     rate = language.units_per_minute
     max_length = int(max_minutes * rate) if max_minutes else None
@@ -71,9 +72,12 @@ def write_script(
             episode=episode.title, podcast=episode.podcast_title, notes=notes, length_limit=length_limit,
             goal=script_format_rules["goal"],
             body=script_format_rules["body"].format(credit_line=credit_line),
-            opening_rules=prompts.OPENING_RULES.format(style_rule=prompts.STYLE_RULES[style]),
+            opening_rules=prompts.OPENING_RULES.format(
+                style_rule=prompts.STYLE_RULES[style], duration=spoken_duration(episode.duration_seconds)
+            ),
             intro=intro or "(none)",
-        ),
+        ) + (f"\n\nEditor-provided context (verified by our editor; may be used in the opening):\n{context}"
+             if context else ""),
     )
     actual = language.length(script) + language.length(intro)
     if max_length and actual > max_length:
@@ -85,6 +89,13 @@ def write_script(
         )
     script = language.polish_spoken(script.strip())
     return f"{intro}\n\n{script}" if intro else script
+
+
+def spoken_duration(seconds: int | None) -> str:
+    if not seconds:
+        return "(unknown length)"
+    hours, minutes = divmod(round(seconds / 60), 60)
+    return f"about {hours} hours {minutes} minutes" if hours else f"about {minutes} minutes"
 
 
 def translate_notes(llm: LLM, episode: Episode, notes: str, language: Language) -> str:

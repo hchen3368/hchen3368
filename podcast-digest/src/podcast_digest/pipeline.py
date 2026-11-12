@@ -25,6 +25,7 @@ class Config:
     max_minutes: float | None = None
     target_minutes: float | None = None
     script_format: str = "digest"
+    context: str = ""
     languages: list[str] = field(default_factory=lambda: ["zh"])
     style: str = "auto"
     social: bool = True
@@ -33,6 +34,8 @@ class Config:
     whisper_model: str = "base.en"
     openai_transcribe_model: str = "gpt-4o-mini-transcribe"
     llm_model: str = "gpt-5.4-mini"
+    script_llm_model: str = "gpt-5.5"
+    script_reasoning_effort: str = "medium"
     brand_name: str | None = None
     brand_tagline: str | None = None
     tts_provider: str | None = None
@@ -79,6 +82,7 @@ def run(
     llm: LLM | None = None,
     tts_engine: tts.TTSEngine | None = None,
 ) -> Result:
+    script_llm = llm or OpenAILLM(config.script_llm_model, reasoning_effort=config.script_reasoning_effort)
     llm = llm or OpenAILLM(config.llm_model)
     workdir = episode_workdir(config, episode)
     if config.force:
@@ -110,7 +114,7 @@ def run(
             config.tts_provider, language, config.tts_model, config.tts_voice, rotation_key=episode.key
         )
         engines[code] = engine.name
-        outputs |= _render_language(episode, config, language, notes, llm, engine, workdir, stage)
+        outputs |= _render_language(episode, config, language, notes, llm, script_llm, engine, workdir, stage)
 
     meta = {
         "episode": asdict(episode) | {"description_html": None},
@@ -132,7 +136,7 @@ def run(
 
 def _render_language(
     episode: Episode, config: Config, language: Language, notes: str,
-    llm: LLM, tts_engine: tts.TTSEngine, workdir: Path, stage: "_Stages",
+    llm: LLM, script_llm: LLM, tts_engine: tts.TTSEngine, workdir: Path, stage: "_Stages",
 ) -> dict[str, Path]:
     code = language.code
     brand = branding.brand_for(code, config.brand_name, config.brand_tagline)
@@ -147,13 +151,14 @@ def _render_language(
             )
         script_path = stage.text(
             workdir / f"script.{code}.txt",
-            fingerprint(llm.name, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER, prompts.SHORTEN_SCRIPT_USER,
-                        prompts.OPENING_RULES, prompts.SCRIPT_FORMATS[config.script_format],
+            fingerprint(script_llm.name, config.script_reasoning_effort, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER,
+                        prompts.SHORTEN_SCRIPT_USER,
+                        prompts.OPENING_RULES, prompts.SCRIPT_FORMATS[config.script_format], config.context,
                         prompts.STYLE_RULES[config.style],
                         language, config.max_minutes, config.target_minutes, notes, intro),
             lambda: summarize.write_script(
-                llm, episode, notes, language, config.style, config.max_minutes, intro, config.target_minutes,
-                config.script_format,
+                script_llm, episode, notes, language, config.style, config.max_minutes, intro, config.target_minutes,
+                config.script_format, config.context,
             ),
         )
     outputs[f"script.{code}"] = script_path

@@ -27,6 +27,8 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument("--title-contains", help="Pick the first episode whose title contains this")
     run.add_argument("--script-format", choices=["digest", "qa"], default="digest",
                      help="digest: condensed walk-through; qa: spoken version of the notes' question map")
+    run.add_argument("--context", default="",
+                     help="Editor-verified background facts the opening may use (e.g. a dated milestone)")
     run.add_argument("--target-minutes", type=float,
                      help="Soft length target guiding what the script keeps; never trimmed or padded afterwards")
     run.add_argument("--max-minutes", type=float,
@@ -43,7 +45,8 @@ def main(argv: list[str] | None = None) -> None:
         help="Comma-separated, tried in order: published, local-whisper, openai-transcribe",
     )
     run.add_argument("--whisper-model", default="base.en")
-    run.add_argument("--llm-model", default="gpt-5.4-mini")
+    run.add_argument("--llm-model", default="gpt-5.4-mini", help="Model for notes, translation and posts")
+    run.add_argument("--script-llm-model", default="gpt-5.5", help="Model for the narration script")
     run.add_argument("--tts-provider", choices=sorted(tts.PROVIDERS),
                      help="Speech provider; default per language (zh: minimax, en: openai)")
     run.add_argument("--tts-model", help="TTS model; default per provider")
@@ -121,6 +124,7 @@ def main(argv: list[str] | None = None) -> None:
             max_minutes=args.max_minutes,
             target_minutes=args.target_minutes,
             script_format=args.script_format,
+            context=args.context,
             transcript_sources=[s.strip() for s in args.transcript_sources.split(",") if s.strip()],
             languages=[s.strip() for s in args.language.split(",") if s.strip()],
             style=args.style,
@@ -128,6 +132,7 @@ def main(argv: list[str] | None = None) -> None:
             video=not args.no_video,
             whisper_model=args.whisper_model,
             llm_model=args.llm_model,
+            script_llm_model=args.script_llm_model,
             tts_provider=args.tts_provider,
             tts_model=args.tts_model,
             tts_voice=args.voice,

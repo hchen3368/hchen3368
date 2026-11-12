@@ -80,7 +80,7 @@ LANGUAGES = {
             "descriptor and the Chinese name; after that use only the surname (e.g. 莫伊特拉). If a full "
             "name is long, use the surname from the start. Never add the English name. "
             "(4) Terms and institutions: use the Chinese term or name without English in brackets "
-            "(e.g. 华盛顿大学, 罗格斯大学, 哥本哈根大学); keep only English abbreviations people say out loud "
+            "(e.g. 华盛顿大学, 罗格斯大学, 哥本哈根大学, 阿姆达尔定律, 摩尔定律); keep only English abbreviations people say out loud "
             "in Chinese, such as AI or MIT. Use established Chinese terms, never phonetic "
             "transliterations (e.g. 毒物兴奋效应, not 荷尔米西斯). "
             "(5) Short, spoken sentences; spoken connectors are welcome but do not pile up filler words; "
@@ -99,6 +99,7 @@ LANGUAGES = {
         spoken_fixes=(
             (re.compile(r"(^|[。！？\n]\s*)(当时|最近|现在|今天|其实|所以|但是|后来|不过|同时|比如|也就是说|另外|然后)，"),
              r"\1\2"),
+            (re.compile(r"与此同时，?"), "同时"),
         ),
     ),
 }

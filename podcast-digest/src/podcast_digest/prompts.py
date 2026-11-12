@@ -88,19 +88,28 @@ full biography, and never add titles, affiliations or awards that the notes do n
 {spoken_rules}"""
 
 OPENING_RULES = """Opening, right after our channel intro:
-1. Context hook: two to four short sentences on the events or developments behind this
-   conversation and why they matter now, using the most gripping concrete facts from the notes'
-   Context section and, if there are competing reactions, both of them (e.g. some call it a crisis,
-   others a golden age). Use only facts stated in the notes; never add outside news or numbers.
-   If the Context section says "none stated", skip this step.
+1. Context hook, in this shape:
+   a. Open with the single most striking concrete event or milestone behind the episode, with its
+      date if the notes or the editor-provided context give one (zh: 2025年7月9日，英伟达市值……).
+   b. One or two sentences on the transformation or stakes (e.g. how a modest company or idea now
+      sits at the center of something huge).
+   c. Always pose the two or three big questions the episode helps answer, as actual questions in
+      plain spoken words (e.g. 它是怎么走到今天的？它的成功给我们什么启示？未来它又将扮演什么角色，
+      如何塑造你我所在的这个世界？). Each of these must end with a question mark, so the voice
+      reads it as a question.
+   Use only facts stated in the notes or the editor-provided context; never add other outside news,
+   dates or numbers. If neither gives any context, open with the central question instead.
 2. Then say where today's content comes from, naming the original podcast and the guest(s) with
-   their short descriptors (zh: 今天我们探讨的内容，来自《...》...).
+   their short descriptors (zh: 今天我们探讨的内容，来自《...》...), and that we condensed this
+   conversation of {duration} (say the length the way people speak, rounded, e.g. 两个半小时) into
+   its key questions and insights
+   (zh: 我们把这期时长约……的访谈，浓缩成最关键的问题与洞见).
 3. {style_rule}"""
 
 STYLE_RULES = {
     "professional": (
-        "State the central question plainly. Keep a precise, professional tone throughout; no "
-        "rhetorical questions to the listener."
+        "State the central question plainly. Keep a precise, professional tone throughout; questions "
+        "are welcome, but do not address the listener's personal life."
     ),
     "hook": (
         "Ask one short, concrete question the listener would genuinely care about, tied to their daily "
@@ -151,22 +160,27 @@ SCRIPT_FORMATS = {
     },
     "qa": {
         "goal": (
-            "Goal: turn the notes' Questions explored section into spoken audio that keeps its "
-            "question-and-answer structure and nearly all of its information. This is a faithful spoken "
-            "rendering, not a further summary: keep every question and every substantive answer, with the "
-            "reasoning, numbers, examples, tensions and insights. Change only how it is said."
+            "Goal: voice the notes' Questions explored section as a sequence of question, views and "
+            "insight, keeping nearly all of its information: every question and every substantive answer, "
+            "with the reasoning, numbers, examples, tensions and insights. Polish the wording so it sounds "
+            "natural and engaging when spoken, but do not summarize further and do not add facts."
         ),
-        "body": """Then:
-1. Go through the questions in the notes' order. Introduce each one as a natural spoken question
-   in plain words (e.g. 第一个问题是…… / 接下来一个问题…… / 那……又是怎么回事呢), never as a heading.
-2. Answer it the way a host explains to a curious friend: who says what, why, and with which
-   evidence, numbers or examples. Make tensions explicit and point out the insight
-   (e.g. 这里有意思的是……).
-3. Turn the notes' bullet points into connected spoken sentences. Never read them out as a list,
-   and do not number points mechanically (no 第一点、第二点).
-4. After the questions, briefly cover the notes' other notable insights and practical takeaways,
-   then the open questions.
-5. {credit_line}""",
+        "body": """Then go through the questions in the notes' order. Every section must open with an actual question
+sentence ending in a question mark; never open a section with a narrative line such as 接着他解释…….
+For each one:
+1. The question: do NOT reuse the wording of the notes' heading. Rewrite it around the most
+   surprising fact, number, paradox or tension in that section's answer, so a listener wants to
+   hear the answer. One or two sentences, never a heading. Examples of the rewrite:
+   "Why did NVIDIA put CUDA on GeForce even though it was financially painful?" ->
+   一项几乎没人用的技术，为什么值得英伟达赌上大半个市值？
+   "How does Jensen think about grid power and data centers?" ->
+   都说 AI 最缺的是电，可黄仁勋却说电网大部分时间都在闲着，这是怎么回事？
+2. The views: who says what, why, and with which evidence, numbers or examples, as connected
+   spoken sentences; make disagreements explicit.
+3. The insight: the non-obvious takeaway, in one or two sentences (e.g. 这里真正值得记住的是……).
+Vary the transitions so the pattern never feels mechanical, and never number points
+(no 第一点、第二点). After the questions, briefly cover the notes' other notable insights and
+practical takeaways, then the open questions. Finally: {credit_line}""",
     },
 }
 

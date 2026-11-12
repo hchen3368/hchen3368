@@ -279,7 +279,7 @@ def test_script_prompt_has_spoken_rules_and_context_opening():
     episode = Episode(podcast_title="Show", title="Ep", audio_url="https://example.com/a.mp3")
     summarize.write_script(Capture(), episode, "notes", LANGUAGES["zh"], "professional")
     assert "当时他发现" in Capture.system and "Never add the English name" in Capture.system
-    assert "Context hook" in Capture.user and "never add outside news" in Capture.user
+    assert "Context hook" in Capture.user and "never add other outside news" in Capture.user
     assert "State the central question plainly" in Capture.user
 
 
@@ -315,9 +315,14 @@ def test_qa_script_format_keeps_notes_structure():
             return "稿子。"
 
     episode = Episode(podcast_title="Show", title="Ep", audio_url="https://example.com/a.mp3")
-    summarize.write_script(Capture(), episode, "notes", LANGUAGES["zh"], script_format="qa")
-    assert "faithful spoken rendering, not a further summary" in Capture.user
-    assert "第一个问题是" in Capture.user and "本期内容整理自英文播客《Show》" in Capture.user
+    long_episode = Episode(podcast_title="Show", title="Ep", audio_url="https://example.com/a.mp3",
+                           duration_seconds=9120)
+    summarize.write_script(Capture(), long_episode, "notes", LANGUAGES["zh"], script_format="qa",
+                           context="2025年7月9日，某公司市值突破4万亿美元。")
+    assert "do not summarize further" in Capture.user and "The insight" in Capture.user
+    assert "本期内容整理自英文播客《Show》" in Capture.user
+    assert "about 2 hours 32 minutes" in Capture.user and "浓缩成最关键的问题与洞见" in Capture.user
+    assert Capture.user.rstrip().endswith("2025年7月9日，某公司市值突破4万亿美元。")
     assert "Walk through the questions explored" not in Capture.user
     with pytest.raises(ValueError):
         pipeline.Config(script_format="essay")

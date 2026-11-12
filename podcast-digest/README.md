@@ -50,6 +50,9 @@ podcast-digest run "huberman lab" --title-contains "Cold & Heat" --language zh -
 | `--no-video` | Skip the MP4 (cover frame + narration + burned-in subtitles). |
 | `--publish` | Upload the shareable outputs after the run (see Storage). |
 | `--target-minutes` | Optional soft length target (e.g. `10` means roughly 8–12 minutes). It only guides what the script keeps; the script is never padded or trimmed afterwards. |
+| `--script-format digest\|qa` | `digest` (default): condensed walk-through. `qa`: every question from the notes voiced as question, views and insight, with catchy questions. |
+| `--context` | Editor-verified background (e.g. a dated milestone) the opening may use; otherwise the script only uses facts from the episode. |
+| `--script-llm-model` | Model for the narration script (default `gpt-5.5`, medium reasoning); notes, translation and posts use `--llm-model` (default `gpt-5.4-mini`). |
 | `--max-minutes` | Hard cap on digest length (default 5). Scripts aim for 3–4.5 minutes (decided while writing the script) and are shortened only if they exceed the cap. |
 | `--llm-model`, `--voice`, `--keep-audio`, `--force` | Models, voice, keep downloaded audio, recompute everything. |
 

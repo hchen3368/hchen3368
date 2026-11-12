@@ -30,6 +30,7 @@ class Theme:
 THEMES = {
     "professional": Theme("#F5F7FA", "#1F3A5F", "#16202C", "#5B6675", "#FFFFFF"),
     "warm": Theme("#FBF6EE", "#E2583E", "#2A211C", "#7A6A60", "#FFFFFF"),
+    "dark": Theme("#0B1220", "#FFD23F", "#FFFFFF", "#9AA7B8", "#16213A"),
 }
 
 
@@ -164,10 +165,10 @@ def render_thumbnail(dest: Path, title: str, subtitle: str, highlight: str = "",
         while size > 100 and max(draw.textlength(t, font=font("bold", size)) for t in manual) > w - 2 * margin:
             size -= 6
         title_font, lines = font("bold", size), manual
-    sub_font, sub_lines = _fit(draw, subtitle, "bold", 68, w - 2 * margin, 2, min_size=44)
+    sub_font, sub_lines = _fit(draw, subtitle, "bold", 100, w - 2 * margin, 2, min_size=56)
     step = int(title_font.size * 1.18)
     block = len(lines) * step + 40 + len(sub_lines) * int(sub_font.size * 1.3)
-    top, bottom = 170, h - 130
+    top, bottom = 170, int(h * 0.78) - 20
     y = top + max((bottom - top - block) // 2, 0)
     for line in lines:
         x = margin
@@ -177,7 +178,7 @@ def render_thumbnail(dest: Path, title: str, subtitle: str, highlight: str = "",
         y += step
     _draw_lines(draw, sub_lines, sub_font, margin, y + 40, THUMB["muted"], 1.3)
     if tag:
-        draw.text((margin, h - 110), tag, font=font("regular", 34), fill=THUMB["muted"])
+        draw.text((margin, int(h * 0.78) + 10), tag, font=font("regular", 34), fill=THUMB["muted"])
     img.save(dest)
     return dest
 

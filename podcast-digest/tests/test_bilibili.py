@@ -72,7 +72,7 @@ def test_upload_without_login_explains_next_step(episode_dir, fake_gears, tmp_pa
 def test_queue_upload_schedules_next_evening_and_skips_done(episode_dir, fake_gears, tmp_path):
     queue = tmp_path / "queue"
     queued = bilibili.enqueue(episode_dir, queue)
-    assert sorted(p.name for p in queued.iterdir()) == ["frame.zh.png", "meta.json", "post.zh.json", "video.zh.mp4"]
+    assert sorted(p.name for p in queued.iterdir()) == ["frame.zh.png", "meta.json", "post.zh.json", "publish.json", "video.zh.mp4"]
     cookies = tmp_path / "cookies.json"
     cookies.write_text("{}")
 
@@ -180,3 +180,14 @@ def test_apply_requests_dry_run_then_skips_done(tmp_path, monkeypatch):
     results = bilibili.apply_requests(requests_dir, cookie_file)
     assert [r["request"] for r in results] == ["002.json"]
     assert calls[-1][0] == "post" and calls[-1][1] == {"csrf": "j"} and calls[-1][2]["title"] == "T"
+
+
+def test_enqueue_with_title_and_immediate_publish(episode_dir, fake_gears, tmp_path):
+    queue = tmp_path / "queue"
+    queued = bilibili.enqueue(episode_dir, queue, title="英伟达启示录：黄仁勋眼中的算力时代", immediate=True)
+    assert json.loads((queued / "post.zh.json").read_text())["bilibili_title"] == "英伟达启示录：黄仁勋眼中的算力时代"
+    cookies = tmp_path / "cookies.json"
+    cookies.write_text("{}")
+    results = bilibili.upload_queue(queue, cookies)
+    assert results[0]["scheduled_for"] == "now" and "dtime" not in fake_gears.calls[0]
+    assert fake_gears.calls[0]["title"] == "英伟达启示录：黄仁勋眼中的算力时代"

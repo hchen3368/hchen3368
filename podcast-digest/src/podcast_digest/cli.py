@@ -27,6 +27,10 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument("--title-contains", help="Pick the first episode whose title contains this")
     run.add_argument("--script-format", choices=["digest", "qa"], default="digest",
                      help="digest: condensed walk-through; qa: spoken version of the notes' question map")
+    run.add_argument("--cover-title", help="Big cover text; use \\n for a line break")
+    run.add_argument("--cover-subtitle")
+    run.add_argument("--cover-highlight", default="", help="Part of the cover title to highlight")
+    run.add_argument("--cover-tag", help="Small line at the bottom of the cover")
     run.add_argument("--script-file", type=Path,
                      help="Use this approved script instead of generating one")
     run.add_argument("--context", default="",
@@ -78,6 +82,8 @@ def main(argv: list[str] | None = None) -> None:
     bq = sub.add_parser("bilibili-queue", help="Add episodes to the Bilibili publish queue (uploaded by CI)")
     bq.add_argument("episode_dirs", nargs="+", type=Path)
     bq.add_argument("--queue", type=Path, default=Path("bilibili-queue"))
+    bq.add_argument("--title", help="Bilibili title to use instead of the generated one")
+    bq.add_argument("--immediate", action="store_true", help="Publish as soon as it passes review")
 
     bqu = sub.add_parser("bilibili-upload-queue", help="Upload every queued episode not yet uploaded (used by CI)")
     bqu.add_argument("--queue", type=Path, default=Path("bilibili-queue"))
@@ -128,6 +134,10 @@ def main(argv: list[str] | None = None) -> None:
             script_format=args.script_format,
             context=args.context,
             script_file=args.script_file,
+            cover_title=args.cover_title.replace("\\n", "\n") if args.cover_title else None,
+            cover_subtitle=args.cover_subtitle,
+            cover_highlight=args.cover_highlight,
+            cover_tag=args.cover_tag,
             transcript_sources=[s.strip() for s in args.transcript_sources.split(",") if s.strip()],
             languages=[s.strip() for s in args.language.split(",") if s.strip()],
             style=args.style,
@@ -166,7 +176,7 @@ def main(argv: list[str] | None = None) -> None:
             print("已提交投稿。请到 B站创作中心确认，并按需勾选“作品含 AI 生成内容”声明。")
     elif args.command == "bilibili-queue":
         for workdir in args.episode_dirs:
-            print(f"Queued {bilibili.enqueue(workdir, args.queue)}")
+            print(f"Queued {bilibili.enqueue(workdir, args.queue, title=args.title, immediate=args.immediate)}")
     elif args.command == "bilibili-upload-queue":
         results = bilibili.upload_queue(args.queue, args.cookies, args.publish_at, args.timezone,
                                         args.immediate, args.dry_run)

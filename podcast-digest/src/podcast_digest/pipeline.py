@@ -28,6 +28,10 @@ class Config:
     script_format: str = "digest"
     context: str = ""
     script_file: Path | None = None
+    cover_title: str | None = None
+    cover_subtitle: str | None = None
+    cover_highlight: str = ""
+    cover_tag: str | None = None
     languages: list[str] = field(default_factory=lambda: ["zh"])
     style: str = "auto"
     social: bool = True
@@ -226,23 +230,21 @@ def _render_social(episode, config, language, localized_notes_path, notes, llm, 
 
 def _render_video(episode, config, code, post, digest_path, srt_path, digest_fp, workdir, stage, brand,
                   script, llm) -> Path:
-    title = post["cover_title"] if post else episode.podcast_title
-    subtitle = post["cover_subtitle"] if post else episode.title
+    title = config.cover_title or (post["cover_title"] if post else episode.podcast_title)
+    subtitle = config.cover_subtitle or (post["cover_subtitle"] if post else episode.title)
+    tag = config.cover_tag or (f"{episode.podcast_title} 中文精华" if code == "zh" else episode.podcast_title)
     frame = workdir / f"frame.{code}.png"
     video_path = workdir / f"video.{code}.mp4"
-    theme = cards.theme_for(config.style)
+    theme = cards.THEMES["dark"]
     sections = split_sections(script)
     slides_path = workdir / f"slides.{code}.json"
     if len(sections) > 1:
         stage.text(slides_path, fingerprint(llm.name, prompts.SLIDES_SYSTEM, prompts.SLIDES_USER, script, "slides-v2"),
                    lambda: json.dumps(summarize.slide_points(llm, sections[1:]), ensure_ascii=False, indent=2))
     slide_points = json.loads(slides_path.read_text()) if len(sections) > 1 else []
-    video_fp = fingerprint(digest_fp, title, subtitle, config.style, brand, slide_points, "video-v3")
+    video_fp = fingerprint(digest_fp, title, subtitle, config.cover_highlight, tag, brand, slide_points, "video-v5")
     if not stage.fresh(video_path, video_fp):
-        footer = "AI 辅助整理 · 内容来自原节目" if code == "zh" else "AI-assisted summary of the original episode"
-        cards.render_cover(frame, title, subtitle, episode.podcast_title, episode.title, theme,
-                           brand=brand.name, size=cards.LANDSCAPE, footer=footer,
-                           source_prefix="来源：" if code == "zh" else "Source: ")
+        cards.render_thumbnail(frame, title, subtitle, config.cover_highlight, brand=brand.name, tag=tag)
         if slide_points:
             slides_dir = workdir / f"slides_{code}"
             shutil.rmtree(slides_dir, ignore_errors=True)
@@ -254,8 +256,7 @@ def _render_video(episode, config, code, post, digest_path, srt_path, digest_fp,
                 for i, point in enumerate(slide_points, start=1)
             ]
             timeline = [tts.SpokenPart(**p) for p in json.loads((workdir / f"timeline.{code}.json").read_text())]
-            starts = tts.section_starts(timeline)
-            video.render_slideshow(list(zip(images, starts)), digest_path, srt_path, video_path)
+            video.render_slideshow(list(zip(images, tts.section_starts(timeline))), digest_path, srt_path, video_path)
         else:
             video.render_video(frame, digest_path, srt_path, video_path)
         stage.record(video_path, video_fp)

@@ -100,7 +100,11 @@ def clean_link(url: str) -> str:
     return urlunsplit(parts._replace(query=query))
 
 
-def enqueue(workdir: Path, queue_dir: Path, code: str = "zh") -> Path:
+PUBLISH_FILE = "publish.json"
+
+
+def enqueue(workdir: Path, queue_dir: Path, code: str = "zh", title: str | None = None,
+            immediate: bool = False) -> Path:
     """Copies the files an upload needs into the publish queue (committed to git for CI to upload)."""
     dest = queue_dir / workdir.parent.name / workdir.name
     dest.mkdir(parents=True, exist_ok=True)
@@ -110,6 +114,12 @@ def enqueue(workdir: Path, queue_dir: Path, code: str = "zh") -> Path:
         if not source.exists():
             raise FileNotFoundError(f"{source} not found; generate the episode with video enabled first")
         shutil.copyfile(source, dest / name)
+    if title:
+        post_path = dest / f"post.{code}.json"
+        post = json.loads(post_path.read_text())
+        post["bilibili_title"] = title
+        post_path.write_text(json.dumps(post, ensure_ascii=False, indent=2))
+    (dest / PUBLISH_FILE).write_text(json.dumps({"immediate": immediate}))
     return dest
 
 
@@ -128,7 +138,10 @@ def upload_queue(queue_dir: Path, cookie_file: Path, publish_at: str = DEFAULT_P
                  tz: str = DEFAULT_TIMEZONE, immediate: bool = False, dry_run: bool = False) -> list[dict]:
     results = []
     for workdir in pending(queue_dir):
-        schedule = None if immediate else next_publish_time(datetime.now(timezone.utc), publish_at, tz)
+        settings_path = workdir / PUBLISH_FILE
+        settings = json.loads(settings_path.read_text()) if settings_path.exists() else {}
+        now = immediate or settings.get("immediate", False)
+        schedule = None if now else next_publish_time(datetime.now(timezone.utc), publish_at, tz)
         submission = upload(workdir, cookie_file, schedule=schedule, dry_run=dry_run)
         results.append({"episode": str(workdir), "title": submission["title"],
                         "scheduled_for": schedule.isoformat() if schedule else "now"})

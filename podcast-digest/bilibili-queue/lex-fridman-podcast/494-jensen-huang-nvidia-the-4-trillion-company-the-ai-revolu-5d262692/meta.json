@@ -1,0 +1,41 @@
+{
+  "episode": {
+    "podcast_title": "Lex Fridman Podcast",
+    "title": "#494 – Jensen Huang: NVIDIA – The $4 Trillion Company & the AI Revolution",
+    "audio_url": "https://media.blubrry.com/takeituneasy/ins.blubrry.com/takeituneasy/lex_ai_jensen_huang.mp3",
+    "guid": "https://lexfridman.com/?p=6434",
+    "link": "https://lexfridman.com/jensen-huang/?utm_source=rss&utm_medium=rss&utm_campaign=jensen-huang",
+    "published": "Mon, 23 Mar 2026 16:28:42 +0000",
+    "duration_seconds": 9133,
+    "description_html": null,
+    "transcript_urls": [
+      [
+        "https://lexfridman.com/jensen-huang-transcript",
+        "text/html"
+      ]
+    ]
+  },
+  "transcript_source": "published:https://lexfridman.com/jensen-huang-transcript",
+  "transcript_words": 23475,
+  "languages": [
+    "zh"
+  ],
+  "styles": {
+    "zh": "professional"
+  },
+  "durations_seconds": {
+    "digest.zh": 985.7
+  },
+  "llm": "openai:gpt-5.4-mini",
+  "tts": {
+    "zh": "minimax:speech-2.8-hd:Chinese (Mandarin)_Sincere_Adult"
+  },
+  "timings_seconds": {
+    "transcript": 0.0,
+    "notes": 0.0,
+    "text.zh": 0.0,
+    "tts.zh": 0.0,
+    "social.zh": 0.0,
+    "video.zh": 94.1
+  }
+}

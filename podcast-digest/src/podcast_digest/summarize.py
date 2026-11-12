@@ -98,8 +98,21 @@ def slide_points(llm: LLM, sections: list) -> list[dict]:
         prompts.SLIDES_SYSTEM, prompts.SLIDES_USER.format(sections=body),
         name="slides", schema=prompts.SLIDES_SCHEMA,
     ))
-    by_label = {item["label"]: item for item in result["slides"]}
-    return [by_label.get(s.label, {"label": s.label, "question": s.heading, "insight": ""}) for s in sections]
+    items = result["slides"]
+    by_label = {_label_key(item["label"]): item for item in items}
+    picked = []
+    for index, section in enumerate(sections):
+        item = by_label.get(_label_key(section.label))
+        if item is None and len(items) == len(sections):
+            item = items[index]
+        item = item or {"question": section.heading, "insight": ""}
+        picked.append({"label": section.label, "question": item["question"] or section.heading,
+                       "insight": item["insight"]})
+    return picked
+
+
+def _label_key(label: str) -> str:
+    return re.sub(r"[\s\[\]【】:：]", "", label)
 
 
 def spoken_duration(seconds: int | None) -> str:

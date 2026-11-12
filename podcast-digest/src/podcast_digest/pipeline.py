@@ -234,7 +234,7 @@ def _render_video(episode, config, code, post, digest_path, srt_path, digest_fp,
     sections = split_sections(script)
     slides_path = workdir / f"slides.{code}.json"
     if len(sections) > 1:
-        stage.text(slides_path, fingerprint(llm.name, prompts.SLIDES_SYSTEM, prompts.SLIDES_USER, script),
+        stage.text(slides_path, fingerprint(llm.name, prompts.SLIDES_SYSTEM, prompts.SLIDES_USER, script, "slides-v2"),
                    lambda: json.dumps(summarize.slide_points(llm, sections[1:]), ensure_ascii=False, indent=2))
     slide_points = json.loads(slides_path.read_text()) if len(sections) > 1 else []
     video_fp = fingerprint(digest_fp, title, subtitle, config.style, brand, slide_points, "video-v3")

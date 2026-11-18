@@ -28,6 +28,7 @@ class Config:
     script_format: str = "digest"
     context: str = ""
     script_file: Path | None = None
+    stop_after: str | None = None
     cover_title: str | None = None
     cover_subtitle: str | None = None
     cover_highlight: str = ""
@@ -130,7 +131,7 @@ def run(
         "styles": {code: config.style for code in config.languages},
         "durations_seconds": {
             name: round(audio.duration_seconds(path), 1)
-            for name, path in outputs.items() if name.startswith("digest.")
+            for name, path in outputs.items() if name.startswith("digest.") and path.exists()
         },
         "llm": llm.name,
         "tts": engines,
@@ -171,6 +172,8 @@ def _render_language(
                 config.target_minutes, config.script_format, config.context,
             ))
     outputs[f"script.{code}"] = script_path
+    if config.stop_after == "script":
+        return outputs
     script = script_path.read_text()
 
     digest_path = workdir / f"digest.{code}.mp3"

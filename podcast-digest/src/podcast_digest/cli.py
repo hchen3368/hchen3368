@@ -31,6 +31,7 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument("--cover-subtitle")
     run.add_argument("--cover-highlight", default="", help="Part of the cover title to highlight")
     run.add_argument("--cover-tag", help="Small line at the bottom of the cover")
+    run.add_argument("--stop-after", choices=["script"], help="Stop once the script is written, for review")
     run.add_argument("--script-file", type=Path,
                      help="Use this approved script instead of generating one")
     run.add_argument("--context", default="",
@@ -134,6 +135,7 @@ def main(argv: list[str] | None = None) -> None:
             script_format=args.script_format,
             context=args.context,
             script_file=args.script_file,
+            stop_after=args.stop_after,
             cover_title=args.cover_title.replace("\\n", "\n") if args.cover_title else None,
             cover_subtitle=args.cover_subtitle,
             cover_highlight=args.cover_highlight,

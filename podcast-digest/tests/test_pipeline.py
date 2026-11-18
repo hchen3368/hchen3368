@@ -367,3 +367,11 @@ def test_approved_script_becomes_section_aligned_slideshow(tmp_path, monkeypatch
     probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
                             str(result.outputs["video.zh"])], check=True, capture_output=True, text=True)
     assert abs(float(probe.stdout) - digest_seconds) < 0.5
+
+
+def test_stop_after_script_skips_audio_and_video(tmp_path, monkeypatch, episode):
+    monkeypatch.setattr(pipeline, "build_transcript_sources", lambda config: [FakeSource()])
+    config = pipeline.Config(output_dir=tmp_path, languages=["zh"], stop_after="script")
+    result = pipeline.run(episode, config, llm=FakeLLM(), tts_engine=FakeTTS())
+    assert result.outputs["script.zh"].exists()
+    assert "digest.zh" not in result.outputs and not (result.workdir / "digest.zh.mp3").exists()

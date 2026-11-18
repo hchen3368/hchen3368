@@ -49,7 +49,7 @@ def write_script(
     llm: LLM, episode: Episode, notes: str,
     language: Language = LANGUAGES["en"], style: str = "auto", max_minutes: float | None = None,
     intro: str = "", target_minutes: float | None = None, script_format: str = "digest",
-    context: str = "",
+    context: str = "", editor_notes: str = "",
 ) -> str:
     rate = language.units_per_minute
     max_length = int(max_minutes * rate) if max_minutes else None
@@ -77,7 +77,10 @@ def write_script(
             ),
             intro=intro or "(none)",
         ) + (f"\n\nEditor-provided context (verified by our editor; may be used in the opening):\n{context}"
-             if context else ""),
+             if context else "")
+          + (f"\n\nEditor's instructions (follow them; they override the default selection, order and emphasis "
+             f"of questions, but never add facts beyond the notes and the editor-provided context):\n{editor_notes}"
+             if editor_notes else ""),
     )
     actual = language.length(script) + language.length(intro)
     if max_length and actual > max_length:

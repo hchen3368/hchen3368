@@ -29,6 +29,7 @@ class Config:
     context: str = ""
     script_file: Path | None = None
     stop_after: str | None = None
+    editor_notes: str = ""
     cover_title: str | None = None
     cover_subtitle: str | None = None
     cover_highlight: str = ""
@@ -164,12 +165,12 @@ def _render_language(
             script_fp = fingerprint(
                 script_llm.name, config.script_reasoning_effort, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER,
                 prompts.SHORTEN_SCRIPT_USER, prompts.OPENING_RULES, prompts.SCRIPT_FORMATS[config.script_format],
-                config.context, prompts.STYLE_RULES[config.style], language, config.max_minutes,
+                config.context, config.editor_notes, prompts.STYLE_RULES[config.style], language, config.max_minutes,
                 config.target_minutes, notes, intro,
             )
             stage.text(script_path, script_fp, lambda: summarize.write_script(
                 script_llm, episode, notes, language, config.style, config.max_minutes, intro,
-                config.target_minutes, config.script_format, config.context,
+                config.target_minutes, config.script_format, config.context, config.editor_notes,
             ))
     outputs[f"script.{code}"] = script_path
     if config.stop_after == "script":

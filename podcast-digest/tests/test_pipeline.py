@@ -375,3 +375,21 @@ def test_stop_after_script_skips_audio_and_video(tmp_path, monkeypatch, episode)
     result = pipeline.run(episode, config, llm=FakeLLM(), tts_engine=FakeTTS())
     assert result.outputs["script.zh"].exists()
     assert "digest.zh" not in result.outputs and not (result.workdir / "digest.zh.mp3").exists()
+
+
+def test_editor_notes_reach_the_script_prompt():
+    from podcast_digest import summarize
+    from podcast_digest.languages import LANGUAGES
+
+    class Capture:
+        name = "c"
+        user = ""
+
+        def complete(self, system, user):
+            Capture.user = user
+            return "稿子。"
+
+    episode = Episode(podcast_title="Show", title="Ep", audio_url="https://example.com/a.mp3")
+    summarize.write_script(Capture(), episode, "notes", LANGUAGES["zh"], script_format="qa",
+                           editor_notes="Merge questions 1 and 2.")
+    assert "Editor's instructions" in Capture.user and Capture.user.rstrip().endswith("Merge questions 1 and 2.")

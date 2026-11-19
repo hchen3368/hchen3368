@@ -12,7 +12,7 @@ from .files import Stamps, fingerprint, write_text_atomic
 from .languages import STYLES, Language, get_language
 from .llm import LLM, OpenAILLM
 from .models import Episode, slugify
-from .sections import split_sections
+from .sections import MARKER_RE, split_sections
 
 log = logging.getLogger(__name__)
 
@@ -246,7 +246,7 @@ def _render_video(episode, config, code, post, digest_path, srt_path, digest_fp,
         stage.text(slides_path, fingerprint(llm.name, prompts.SLIDES_SYSTEM, prompts.SLIDES_USER, script, "slides-v2"),
                    lambda: json.dumps(summarize.slide_points(llm, sections[1:]), ensure_ascii=False, indent=2))
     slide_points = json.loads(slides_path.read_text()) if len(sections) > 1 else []
-    video_fp = fingerprint(digest_fp, title, subtitle, config.cover_highlight, tag, brand, slide_points, "video-v5")
+    video_fp = fingerprint(digest_fp, title, subtitle, config.cover_highlight, tag, brand, slide_points, "video-v6")
     if not stage.fresh(video_path, video_fp):
         cards.render_thumbnail(frame, title, subtitle, config.cover_highlight, brand=brand.name, tag=tag)
         if slide_points:
@@ -254,7 +254,8 @@ def _render_video(episode, config, code, post, digest_path, srt_path, digest_fp,
             shutil.rmtree(slides_dir, ignore_errors=True)
             slides_dir.mkdir()
             images = [frame] + [
-                cards.render_question_slide(slides_dir / f"{i:02d}.png", point["label"], point["question"],
+                cards.render_question_slide(slides_dir / f"{i:02d}.png", point["label"],
+                                            MARKER_RE.sub("", point["question"], count=1).strip(),
                                             point["insight"], episode.podcast_title, theme, brand=brand.name,
                                             insight_label="洞见" if code == "zh" else "Insight")
                 for i, point in enumerate(slide_points, start=1)

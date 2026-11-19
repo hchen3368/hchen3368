@@ -184,10 +184,12 @@ def test_apply_requests_dry_run_then_skips_done(tmp_path, monkeypatch):
 
 def test_enqueue_with_title_and_immediate_publish(episode_dir, fake_gears, tmp_path):
     queue = tmp_path / "queue"
-    queued = bilibili.enqueue(episode_dir, queue, title="英伟达启示录：黄仁勋眼中的算力时代", immediate=True)
+    queued = bilibili.enqueue(episode_dir, queue, title="英伟达启示录：黄仁勋眼中的算力时代", immediate=True,
+                              description="我们的简介。")
     assert json.loads((queued / "post.zh.json").read_text())["bilibili_title"] == "英伟达启示录：黄仁勋眼中的算力时代"
     cookies = tmp_path / "cookies.json"
     cookies.write_text("{}")
     results = bilibili.upload_queue(queue, cookies)
     assert results[0]["scheduled_for"] == "now" and "dtime" not in fake_gears.calls[0]
     assert fake_gears.calls[0]["title"] == "英伟达启示录：黄仁勋眼中的算力时代"
+    assert fake_gears.calls[0]["desc"].startswith("我们的简介。") and "【原出处】" in fake_gears.calls[0]["desc"]

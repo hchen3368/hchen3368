@@ -104,7 +104,7 @@ PUBLISH_FILE = "publish.json"
 
 
 def enqueue(workdir: Path, queue_dir: Path, code: str = "zh", title: str | None = None,
-            immediate: bool = False) -> Path:
+            immediate: bool = False, description: str | None = None) -> Path:
     """Copies the files an upload needs into the publish queue (committed to git for CI to upload)."""
     dest = queue_dir / workdir.parent.name / workdir.name
     dest.mkdir(parents=True, exist_ok=True)
@@ -114,10 +114,13 @@ def enqueue(workdir: Path, queue_dir: Path, code: str = "zh", title: str | None 
         if not source.exists():
             raise FileNotFoundError(f"{source} not found; generate the episode with video enabled first")
         shutil.copyfile(source, dest / name)
-    if title:
+    if title or description:
         post_path = dest / f"post.{code}.json"
         post = json.loads(post_path.read_text())
-        post["bilibili_title"] = title
+        if title:
+            post["bilibili_title"] = title
+        if description:
+            post["bilibili_description"] = description
         post_path.write_text(json.dumps(post, ensure_ascii=False, indent=2))
     (dest / PUBLISH_FILE).write_text(json.dumps({"immediate": immediate}))
     return dest

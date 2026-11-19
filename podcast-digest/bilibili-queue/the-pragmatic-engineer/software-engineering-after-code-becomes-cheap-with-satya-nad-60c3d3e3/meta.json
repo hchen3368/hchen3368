@@ -1,0 +1,41 @@
+{
+  "episode": {
+    "podcast_title": "The Pragmatic Engineer",
+    "title": "Software engineering after code becomes cheap with Satya Nadella",
+    "audio_url": "https://api.substack.com/feed/podcast/225062889/de3ec785dc079b1f629f4720783cb429.mp3",
+    "guid": "substack:post:225062889",
+    "link": "https://newsletter.pragmaticengineer.com/p/software-engineering-after-code-becomes",
+    "published": "Mon, 16 Nov 2026 13:33:48 GMT",
+    "duration_seconds": 3760,
+    "description_html": null,
+    "transcript_urls": [
+      [
+        "https://api.substack.com/feed/podcast/transcript/225062889/a6d2a53f6d5f8d615d822d44fb1c915e.vtt",
+        "text/vtt"
+      ]
+    ]
+  },
+  "transcript_source": "published:https://api.substack.com/feed/podcast/transcript/225062889/a6d2a53f6d5f8d615d822d44fb1c915e.vtt",
+  "transcript_words": 11540,
+  "languages": [
+    "zh"
+  ],
+  "styles": {
+    "zh": "professional"
+  },
+  "durations_seconds": {
+    "digest.zh": 872.0
+  },
+  "llm": "openai:gpt-5.4-mini",
+  "tts": {
+    "zh": "minimax:speech-2.8-hd:Chinese (Mandarin)_Sincere_Adult"
+  },
+  "timings_seconds": {
+    "transcript": 0.0,
+    "notes": 0.0,
+    "text.zh": 0.0,
+    "tts.zh": 0.0,
+    "social.zh": 0.0,
+    "video.zh": 81.8
+  }
+}

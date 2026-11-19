@@ -87,6 +87,7 @@ def main(argv: list[str] | None = None) -> None:
     bq.add_argument("--queue", type=Path, default=Path("bilibili-queue"))
     bq.add_argument("--title", help="Bilibili title to use instead of the generated one")
     bq.add_argument("--immediate", action="store_true", help="Publish as soon as it passes review")
+    bq.add_argument("--desc-file", type=Path, help="Description body to use (the source credit is still appended)")
 
     bqu = sub.add_parser("bilibili-upload-queue", help="Upload every queued episode not yet uploaded (used by CI)")
     bqu.add_argument("--queue", type=Path, default=Path("bilibili-queue"))
@@ -181,7 +182,10 @@ def main(argv: list[str] | None = None) -> None:
             print("已提交投稿。请到 B站创作中心确认，并按需勾选“作品含 AI 生成内容”声明。")
     elif args.command == "bilibili-queue":
         for workdir in args.episode_dirs:
-            print(f"Queued {bilibili.enqueue(workdir, args.queue, title=args.title, immediate=args.immediate)}")
+            description = args.desc_file.read_text().strip() if args.desc_file else None
+            queued = bilibili.enqueue(workdir, args.queue, title=args.title, immediate=args.immediate,
+                                      description=description)
+            print(f"Queued {queued}")
     elif args.command == "bilibili-upload-queue":
         results = bilibili.upload_queue(args.queue, args.cookies, args.publish_at, args.timezone,
                                         args.immediate, args.dry_run)

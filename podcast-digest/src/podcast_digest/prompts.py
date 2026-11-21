@@ -249,21 +249,23 @@ SCRIPT_FORMATS["topic"] = {
         "they can use for their own growth, career, decisions or view of the world. About five minutes "
         "is typical, but length follows content: never pad a thin topic, never cram a rich one."
     ),
-    "opening": """Opening, right after our channel intro:
-1. Open with the viewer question itself, addressed to the viewer and tied to a situation they
-   recognize (zh: 如果你是一名工程师，你可能也在想……？). It must end with a question mark. If the
-   notes' Context or the editor-provided context gives a striking concrete fact, you may use it in
-   one sentence to show why the question matters now; never add outside facts.
-2. Then say where the answer comes from: the original podcast and the guest(s) with short
-   descriptors (zh: 今天的答案，来自《...》中...的一场对话), and that we picked out the viewpoints
-   most worth taking away on this question (zh: 我们从中挑出了几个最值得带走的观点).
-3. {style_rule}""",
-    "body": """Then go through the notes' viewpoints in order. For each one:
+    "opening": """Opening, right after our channel intro, in this order:
+1. The viewer question itself, addressed to the viewer and tied to a situation they recognize
+   (zh: 如果你是一名工程师，你可能也在想……？). It must end with a question mark.
+2. Where the answer comes from: the original podcast and the guest(s) with short descriptors
+   (zh: 今天的答案，来自《...》中...的一场对话). Only after the guest is introduced, you may add
+   one striking concrete fact from the notes that shows why the question matters now.
+3. One sentence saying we picked out the viewpoints most worth taking away on this question
+   (zh: 我们从中挑出了几个最值得带走的观点). Then go straight into the first viewpoint: no
+   sentence about what kind of topic this is, and no second question to the viewer.""",
+    "body": """Then go through the notes' viewpoints in order, keeping only as many as the length allows
+(usually three or four for five minutes); merge overlapping ones. For each one:
 1. Start on its own line with a numbered marker and state the viewpoint as one crisp, memorable
    spoken sentence: 观点一：…… 观点二：…… (English: Point 1: …). These markers are read aloud and
    drive the video slides, so use them exactly.
-2. Who says it and why, with the stories, examples or numbers they give, as connected spoken
-   sentences; make pushback or counterpoints explicit.
+2. Who says it and why, with the one or two most vivid stories, examples or numbers they give, as
+   connected spoken sentences; make pushback or counterpoints explicit. Pick the telling detail,
+   never list every tool or technique mentioned.
 3. What it means for the viewer, in one or two sentences grounded in what was said; vary the
    wording (never the same phrase every time) and never preach.
 Start the wrap-up on its own line with 结语： (English: Wrap-up:): answer the question in two or

@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 
 CACHED_PREFIXES = ("transcript", "notes", "script", "digest", "subtitles", "post", "video", "frame", "stamps")
 SOCIAL_LANGUAGES = {"zh"}
+TOPIC_TARGET_MINUTES = 5
 
 
 @dataclass
@@ -58,6 +59,8 @@ class Config:
             raise ValueError(f"Unknown script format {self.script_format!r}; choose from {sorted(prompts.SCRIPT_FORMATS)}")
         if (self.script_format == "topic") != bool(self.question):
             raise ValueError("--question goes with --script-format topic, and topic needs a question")
+        if self.script_format == "topic" and self.target_minutes is None:
+            self.target_minutes = TOPIC_TARGET_MINUTES
         if self.style not in STYLES:
             raise ValueError(f"Unknown style {self.style!r}; choose from {STYLES}")
         for code in self.languages:

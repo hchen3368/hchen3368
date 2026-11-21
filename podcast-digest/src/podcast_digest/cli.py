@@ -63,6 +63,7 @@ def main(argv: list[str] | None = None) -> None:
                      help="Speech provider; default per language (zh: minimax, en: openai)")
     run.add_argument("--tts-model", help="TTS model; default per provider")
     run.add_argument("--voice", help="Voice id, or 女声/男声 (female/male), or 轮流/alternate to rotate by episode; default 女声")
+    run.add_argument("--speed", type=float, default=1.2, help="Speech speed (default 1.2)")
     run.add_argument("--brand-name", help="Our channel name for the intro (env PD_BRAND_NAME)")
     run.add_argument("--brand-tagline", help="Tagline said before the name (env PD_BRAND_TAGLINE)")
     run.add_argument("--keep-audio", action="store_true", help="Keep the downloaded episode audio")
@@ -175,6 +176,7 @@ def main(argv: list[str] | None = None) -> None:
             tts_provider=args.tts_provider,
             tts_model=args.tts_model,
             tts_voice=args.voice,
+            tts_speed=args.speed,
             brand_name=args.brand_name,
             brand_tagline=args.brand_tagline,
             keep_audio=args.keep_audio,

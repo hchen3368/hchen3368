@@ -50,6 +50,7 @@ class Config:
     tts_provider: str | None = None
     tts_model: str | None = None
     tts_voice: str | None = None
+    tts_speed: float = 1.2
     keep_audio: bool = False
     force: bool = False
 
@@ -134,7 +135,8 @@ def run(
     for code in config.languages:
         language = get_language(code)
         engine = tts_engine or tts.build_engine(
-            config.tts_provider, language, config.tts_model, config.tts_voice, rotation_key=episode.key
+            config.tts_provider, language, config.tts_model, config.tts_voice, rotation_key=episode.key,
+            speed=config.tts_speed,
         )
         engines[code] = engine.name
         outputs |= _render_language(episode, config, language, notes, llm, script_llm, engine, workdir, stage)

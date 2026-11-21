@@ -65,3 +65,8 @@ def test_voice_aliases_and_rotation():
     assert picks == {"Chinese (Mandarin)_Warm_Bestie", "Chinese (Mandarin)_Sincere_Adult"}
     assert tts.resolve_voice("minimax", "zh", "轮流", "ep-1") == tts.resolve_voice("minimax", "zh", "alternate", "ep-1")
     assert tts.resolve_voice("minimax", "zh", "custom-id") == "custom-id"
+
+
+def test_speed_reaches_engine_and_cache_key():
+    engine = tts.build_engine("minimax", LANGUAGES["zh"], voice="v1", speed=1.2)
+    assert engine.speed == 1.2 and engine.name == "minimax:speech-2.8-hd:v1:x1.2"

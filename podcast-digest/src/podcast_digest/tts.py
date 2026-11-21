@@ -35,11 +35,12 @@ DEFAULT_TTS_MODEL = "gpt-4o-mini-tts-2025-12-15"
 
 
 class OpenAITTS:
-    def __init__(self, model: str = DEFAULT_TTS_MODEL, voice: str = "alloy", client=None):
+    def __init__(self, model: str = DEFAULT_TTS_MODEL, voice: str = "alloy", client=None, speed: float = 1.0):
         self.model = model
         self.voice = voice
+        self.speed = speed
         self._client = client
-        self.name = f"openai:{model}:{voice}"
+        self.name = f"openai:{model}:{voice}" + (f":x{speed:g}" if speed != 1.0 else "")
 
     @property
     def client(self):
@@ -52,7 +53,7 @@ class OpenAITTS:
     def synthesize(self, text: str, dest: Path, instructions: str) -> Path:
         with self.client.audio.speech.with_streaming_response.create(
             model=self.model, voice=self.voice, input=text,
-            instructions=instructions, response_format="mp3",
+            instructions=instructions, response_format="mp3", speed=self.speed,
         ) as response:
             response.stream_to_file(dest)
         return dest
@@ -72,7 +73,7 @@ class MiniMaxTTS:
         self.language_code = language_code
         self.speed = speed
         self._session = session or requests.Session()
-        self.name = f"minimax:{model}:{voice}"
+        self.name = f"minimax:{model}:{voice}" + (f":x{speed:g}" if speed != 1.0 else "")
 
     def synthesize(self, text: str, dest: Path, instructions: str = "") -> Path:
         body = {
@@ -130,7 +131,7 @@ ROTATE = {"alternate", "轮流"}
 
 
 def build_engine(provider: str | None, language: Language, model: str | None = None,
-                 voice: str | None = None, rotation_key: str = "") -> TTSEngine:
+                 voice: str | None = None, rotation_key: str = "", speed: float = 1.0) -> TTSEngine:
     provider = provider or DEFAULT_PROVIDERS.get(language.code, "openai")
     if provider not in PROVIDERS:
         raise ValueError(f"Unknown TTS provider {provider!r}; choose from {sorted(PROVIDERS)}")
@@ -138,8 +139,8 @@ def build_engine(provider: str | None, language: Language, model: str | None = N
     model = model or defaults["model"]
     voice = resolve_voice(provider, language.code, voice, rotation_key)
     if provider == "minimax":
-        return MiniMaxTTS(model, voice, language.code)
-    return OpenAITTS(model, voice)
+        return MiniMaxTTS(model, voice, language.code, speed)
+    return OpenAITTS(model, voice, speed=speed)
 
 
 def resolve_voice(provider: str, code: str, voice: str | None, rotation_key: str = "") -> str:

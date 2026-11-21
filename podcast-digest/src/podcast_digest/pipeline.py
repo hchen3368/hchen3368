@@ -121,9 +121,10 @@ def run(
     outputs: dict[str, Path] = {}
     with stage.timed("notes"):
         if config.question:
-            notes_fp = fingerprint(llm.name, prompts.NOTES_SYSTEM, prompts.TOPIC_NOTES_USER, prompts.TOPIC_CHUNK_USER,
-                                   config.question, transcript.text, summarize.episode_description(episode))
-            produce = lambda: summarize.extract_topic_notes(llm, episode, transcript.text, config.question)
+            notes_fp = fingerprint(script_llm.name, config.script_reasoning_effort, prompts.NOTES_SYSTEM,
+                                   prompts.TOPIC_NOTES_USER, prompts.TOPIC_CHUNK_USER, config.question,
+                                   transcript.text, summarize.episode_description(episode))
+            produce = lambda: summarize.extract_topic_notes(script_llm, episode, transcript.text, config.question)
         else:
             notes_fp = fingerprint(llm.name, prompts.NOTES_SYSTEM, prompts.NOTES_USER, transcript.text,
                                    summarize.episode_description(episode))

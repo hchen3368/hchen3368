@@ -82,13 +82,19 @@ markdown notes:
    stated; write "none stated" if there are none)
 ## Viewpoints
 The 3-5 strongest viewpoints from the episode that answer the question, in the order that best
-builds an answer. For each:
-### <the viewpoint as one clear claim>
+builds an answer. Judge strength by novelty and concreteness: a viewpoint that any commentator
+could state without having heard this episode ("quality control must be automated", "collaboration
+matters more") is weak unless the episode attaches a specific mechanism, rule, number or story to
+it. Prefer what is surprising, specific to this guest's first-hand experience, and something a
+viewer could copy or test. For each:
+### <the viewpoint as one specific claim, carrying its concrete hook (a rule, number or practice)>
 - Who and why: whose view it is and their reasoning, attributed by name.
-- Evidence: the stories, examples, numbers or experience they give.
-- Tension: pushback, a counterpoint, or how it cuts against common belief. Omit if none.
-- For the viewer: what someone can take from it for their own work or life, grounded in what
-  was said.
+- Concrete details: the exact practices, rules, numbers, costs, names of internal systems and
+  first-hand stories given, as specifically as said (e.g. "of his 20 parallel agent chats, 2 are
+  hands-on, 18 run unattended toward a goal", not "he uses agents in different ways").
+- Tension: pushback from the host or another guest, a counterpoint, or how it cuts against common
+  belief. Always include the host's disagreement when there is one. Omit if none.
+- Try it: one concrete thing a viewer could do or test this week, grounded in what was said.
 ## Practical takeaways (only concrete advice the episode actually gives on this question)
 ## Notable quotes (max 3, verbatim, with speaker, relevant to the question)
 ## Coverage (one line: how much of the episode addresses the question: thin, solid or rich)
@@ -111,7 +117,8 @@ Episode: {episode} (part {part} of {total})
 Our viewer question: {question}
 
 From this part, extract only what helps answer the question: each relevant view with who holds it,
-their reasoning, the stories, examples and numbers they give, pushback, concrete advice, and up to
+their reasoning, the exact practices, rules, numbers, costs and first-hand stories they give (keep
+them specific, never generalize them away), pushback, concrete advice, and up to
 2 memorable verbatim quotes with speaker. If nothing in this part is relevant, reply exactly
 "(nothing relevant)". Use up to about 600 words.
 
@@ -266,8 +273,9 @@ SCRIPT_FORMATS["topic"] = {
 2. Who says it and why, with the one or two most vivid stories, examples or numbers they give, as
    connected spoken sentences; make pushback or counterpoints explicit. Pick the telling detail,
    never list every tool or technique mentioned.
-3. What it means for the viewer, in one or two sentences grounded in what was said; vary the
-   wording (never the same phrase every time) and never preach.
+3. What the viewer can try, taken from the notes' Try it line: concrete and doable, in one or two
+   sentences; vary the wording (never the same phrase every time) and never preach. Generic
+   advice such as 要重视质量、要加强协作 does not count.
 Start the wrap-up on its own line with 结语： (English: Wrap-up:): answer the question in two or
 three sentences, leave the viewer with one thought or question to act on, then: {credit_line}""",
 }

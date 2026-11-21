@@ -1,0 +1,62 @@
+{
+  "title": "AI写代码后，review怎么改？",
+  "cover_title": "Review重构",
+  "cover_subtitle": "AI时代的代码评审",
+  "cards": [
+    {
+      "heading": "逐行review过时了",
+      "points": [
+        "AI让PR暴涨，人类不该再逐行看diff",
+        "重点上移到：值不值得上线、风险多大",
+        "把 change 当 release，而不是单个 PR"
+      ]
+    },
+    {
+      "heading": "给PR先分风险",
+      "points": [
+        "先标记 minimal / medium / high risk",
+        "高风险重点看 schema、迁移、权限、回滚",
+        "低风险走快路径，别让所有PR同等待遇"
+      ]
+    },
+    {
+      "heading": "上线也要有执照",
+      "points": [
+        "谁总引入 regression，谁就失去免审权",
+        "记录引入PR、修复PR、暴露时长",
+        "表现稳定后，再恢复独立上线权"
+      ]
+    },
+    {
+      "heading": "QA要贯穿全链路",
+      "points": [
+        "本地测试、TLA+、模拟器、云dev环境都要用",
+        "上线后盯 logs / traces / performance",
+        "再配 janitorial agents 清 flaky tests 和坏抽象"
+      ]
+    }
+  ],
+  "body": "当 AI 开始大量产出代码，工程团队真正的瓶颈，可能不再是“写得够不够快”，而是“谁来判断这次改动值不值得上线”。Harjot Gill 提到，他们把 review 从逐个 PR，改成按 release 风险来评估：先看 blast radius、migration、schema、权限和回滚。🧭\n\n更有意思的是“上线驾驶执照”机制：谁总带来 production regression，谁就回到 human review；表现稳定的人，才拿到 fast track。这样做的核心不是放松质量，而是把责任和反馈回路绑紧。🛠️\n\n他们还把 QA 做到整条链路里：TLA+、模拟器、feature flag、progressive rollout，再到 production 里的 logs 和 traces。最后用 janitorial agents 持续清 flaky tests、坏抽象和 CI 成本。⚠️ 仅供参考，不构成投资或商业建议。\n\n你们团队现在是“逐行 review”，还是已经开始按风险和 release 管理了？\n\n来源：The Pragmatic Engineer（英文播客）｜长话短听 AI 助手总结",
+  "tags": [
+    "AI代码审查",
+    "代码评审",
+    "软件工程",
+    "工程协作",
+    "质量控制",
+    "CodeRabbit",
+    "生产事故",
+    "CI/CD"
+  ],
+  "bilibili_title": "AI写代码之后，公司该怎么管？",
+  "bilibili_description": "AI 一个月能帮一家公司合并五千多个 PR，人还审得过来吗？这期我们从一家 AI 代码评审公司创始人的一线实践里，提炼出五个具体可操作的做法：\n1. 评审从逐个 PR 上移到每次发布的风险判断，每个 PR 标注风险等级\n2. 工程师“上线驾照”：回归太多就吊销，重新经过评审和证明期\n3. 陶轮与工厂：20 个 AI 对话里，2 个人工打磨，18 个让智能体自己跑\n4. 质量控制覆盖整条链路，目标是缩短坏代码在线上的暴露时间\n5. 让清洁型智能体持续清理不稳定测试和坏抽象\n每个观点都附了一个这周就能试的小动作。你的团队现在审的是代码，还是上线风险？欢迎在评论区聊聊。",
+  "bilibili_tags": [
+    "AI代码审查",
+    "代码评审",
+    "软件工程",
+    "CI/CD",
+    "质量控制",
+    "工程团队",
+    "代码生成",
+    "生产可观测性"
+  ]
+}

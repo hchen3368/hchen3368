@@ -253,8 +253,9 @@ SCRIPT_FORMATS["topic"] = {
     "goal": (
         "Goal: answer one question for the viewer (given below), using only this episode's viewpoints "
         "on it. This is NOT a summary of the episode. The viewer should come away with perspectives "
-        "they can use for their own growth, career, decisions or view of the world. About five minutes "
-        "is typical, but length follows content: never pad a thin topic, never cram a rich one."
+        "they can use for their own growth, career, decisions or view of the world. Substance beats "
+        "brevity: five to eight minutes is typical, and a rich topic may run longer. Keep every strong "
+        "viewpoint with its concrete details; cut only repetition and filler, never pad a thin topic."
     ),
     "opening": """Opening, right after our channel intro, in this order:
 1. The viewer question itself, addressed to the viewer and tied to a situation they recognize
@@ -265,8 +266,7 @@ SCRIPT_FORMATS["topic"] = {
 3. One sentence saying we picked out the viewpoints most worth taking away on this question
    (zh: 我们从中挑出了几个最值得带走的观点). Then go straight into the first viewpoint: no
    sentence about what kind of topic this is, and no second question to the viewer.""",
-    "body": """Then go through the notes' viewpoints in order, keeping only as many as the length allows
-(usually three or four for five minutes); merge overlapping ones. For each one:
+    "body": """Then go through the notes' viewpoints in order, merging only ones that truly overlap. For each one:
 1. Start on its own line with a numbered marker and state the viewpoint as one crisp, memorable
    spoken sentence: 观点一：…… 观点二：…… (English: Point 1: …). These markers are read aloud and
    drive the video slides, so use them exactly.
@@ -411,7 +411,8 @@ A strong candidate:
 - has a question a broad Chinese audience (students, engineers, professionals, founders, investors)
   would genuinely ask about their own path or how the world is changing, e.g. "AI之后，工程师何去何从？";
 - is likely to get substantive, non-obvious answers from this guest, judging by the description;
-- would make a video of roughly five minutes without padding;
+- has enough concrete, first-hand substance (practices, numbers, stories) for a five-to-eight-minute
+  video without padding;
 - is not a near-repeat of a recently proposed title.
 Prefer episodes with published transcripts when quality is similar. Skip ads-only, trailers,
 re-runs and episodes whose description gives too little to judge.

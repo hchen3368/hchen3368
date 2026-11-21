@@ -37,6 +37,30 @@ def extract_notes(llm: LLM, episode: Episode, text: str) -> str:
     )
 
 
+def extract_topic_notes(llm: LLM, episode: Episode, text: str, question: str) -> str:
+    """Notes on only what the episode says about one viewer question (map over chunks, then reduce)."""
+    text = TRANSCRIPT_TAG_RE.sub("", text)
+    if len(text.split()) > SINGLE_PASS_MAX_WORDS:
+        chunks = chunk_lines(text, CHUNK_WORDS)
+        text = "\n\n".join(
+            llm.complete(
+                prompts.NOTES_SYSTEM,
+                prompts.TOPIC_CHUNK_USER.format(
+                    podcast=episode.podcast_title, episode=episode.title, question=question,
+                    part=i + 1, total=len(chunks), transcript=chunk,
+                ),
+            )
+            for i, chunk in enumerate(chunks)
+        )
+    return llm.complete(
+        prompts.NOTES_SYSTEM,
+        prompts.TOPIC_NOTES_USER.format(
+            podcast=episode.podcast_title, episode=episode.title, question=question,
+            description=episode_description(episode), transcript=text,
+        ),
+    )
+
+
 def episode_description(episode: Episode, max_chars: int = DESCRIPTION_MAX_CHARS) -> str:
     from bs4 import BeautifulSoup
 
@@ -49,7 +73,7 @@ def write_script(
     llm: LLM, episode: Episode, notes: str,
     language: Language = LANGUAGES["en"], style: str = "auto", max_minutes: float | None = None,
     intro: str = "", target_minutes: float | None = None, script_format: str = "digest",
-    context: str = "", editor_notes: str = "",
+    context: str = "", editor_notes: str = "", question: str = "",
 ) -> str:
     rate = language.units_per_minute
     max_length = int(max_minutes * rate) if max_minutes else None
@@ -72,11 +96,12 @@ def write_script(
             episode=episode.title, podcast=episode.podcast_title, notes=notes, length_limit=length_limit,
             goal=script_format_rules["goal"],
             body=script_format_rules["body"].format(credit_line=credit_line),
-            opening_rules=prompts.OPENING_RULES.format(
+            opening_rules=script_format_rules.get("opening", prompts.OPENING_RULES).format(
                 style_rule=prompts.STYLE_RULES[style], duration=spoken_duration(episode.duration_seconds)
             ),
             intro=intro or "(none)",
-        ) + (f"\n\nEditor-provided context (verified by our editor; may be used in the opening):\n{context}"
+        ) + (f"\n\nThe viewer question this video answers:\n{question}" if question else "")
+          + (f"\n\nEditor-provided context (verified by our editor; may be used in the opening):\n{context}"
              if context else "")
           + (f"\n\nEditor's instructions (follow them; they override the default selection, order and emphasis "
              f"of questions, but never add facts beyond the notes and the editor-provided context):\n{editor_notes}"

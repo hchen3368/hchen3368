@@ -3,7 +3,9 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-MARKER_RE = re.compile(r"^\s*((?:问题[一二三四五六七八九十百零〇两\d]+)|结语|Question \d+|Wrap-up)[：:]\s*", re.M)
+MARKER_RE = re.compile(
+    r"^\s*((?:(?:问题|观点)[一二三四五六七八九十百零〇两\d]+)|结语|(?:Question|Point) \d+|Wrap-up)[：:]\s*", re.M
+)
 CN_DIGITS = "零一二三四五六七八九"
 
 
@@ -14,7 +16,7 @@ class Section:
 
     @property
     def is_question(self) -> bool:
-        return self.label.startswith(("问题", "Question"))
+        return self.label.startswith(("问题", "观点", "Question", "Point"))
 
     @property
     def heading(self) -> str:

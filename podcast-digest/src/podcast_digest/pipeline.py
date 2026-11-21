@@ -26,6 +26,7 @@ class Config:
     max_minutes: float | None = None
     target_minutes: float | None = None
     script_format: str = "digest"
+    question: str = ""
     context: str = ""
     script_file: Path | None = None
     stop_after: str | None = None
@@ -55,6 +56,8 @@ class Config:
     def __post_init__(self):
         if self.script_format not in prompts.SCRIPT_FORMATS:
             raise ValueError(f"Unknown script format {self.script_format!r}; choose from {sorted(prompts.SCRIPT_FORMATS)}")
+        if (self.script_format == "topic") != bool(self.question):
+            raise ValueError("--question goes with --script-format topic, and topic needs a question")
         if self.style not in STYLES:
             raise ValueError(f"Unknown style {self.style!r}; choose from {STYLES}")
         for code in self.languages:
@@ -84,6 +87,12 @@ def episode_workdir(config: Config, episode: Episode) -> Path:
     return config.output_dir / slugify(episode.podcast_title, 40) / episode.key
 
 
+def topic_workdir(config: Config, episode: Episode) -> Path:
+    """A topic video lives next to its episode, so several questions can come from one episode."""
+    base = episode_workdir(config, episode)
+    return base.with_name(f"{base.name}--{fingerprint(config.question)[:8]}")
+
+
 def run(
     episode: Episode,
     config: Config,
@@ -92,26 +101,31 @@ def run(
 ) -> Result:
     script_llm = llm or OpenAILLM(config.script_llm_model, reasoning_effort=config.script_reasoning_effort)
     llm = llm or OpenAILLM(config.llm_model)
-    workdir = episode_workdir(config, episode)
+    source_dir = episode_workdir(config, episode)
+    workdir = topic_workdir(config, episode) if config.question else source_dir
     if config.force:
         _clear_outputs(workdir)
     workdir.mkdir(parents=True, exist_ok=True)
+    source_dir.mkdir(parents=True, exist_ok=True)
     stage = _Stages(Stamps(workdir / "stamps.json"))
 
     with stage.timed("transcript"):
-        transcript = transcripts.get_transcript(episode, workdir, build_transcript_sources(config))
+        transcript = transcripts.get_transcript(episode, source_dir, build_transcript_sources(config))
     log.info("Transcript: %d words via %s", transcript.word_count, transcript.source)
     if not config.keep_audio:
-        _discard_audio(workdir)
+        _discard_audio(source_dir)
 
     outputs: dict[str, Path] = {}
     with stage.timed("notes"):
-        notes_path = stage.text(
-            workdir / "notes.md",
-            fingerprint(llm.name, prompts.NOTES_SYSTEM, prompts.NOTES_USER, transcript.text,
-                        summarize.episode_description(episode)),
-            lambda: summarize.extract_notes(llm, episode, transcript.text),
-        )
+        if config.question:
+            notes_fp = fingerprint(llm.name, prompts.NOTES_SYSTEM, prompts.TOPIC_NOTES_USER, prompts.TOPIC_CHUNK_USER,
+                                   config.question, transcript.text, summarize.episode_description(episode))
+            produce = lambda: summarize.extract_topic_notes(llm, episode, transcript.text, config.question)
+        else:
+            notes_fp = fingerprint(llm.name, prompts.NOTES_SYSTEM, prompts.NOTES_USER, transcript.text,
+                                   summarize.episode_description(episode))
+            produce = lambda: summarize.extract_notes(llm, episode, transcript.text)
+        notes_path = stage.text(workdir / "notes.md", notes_fp, produce)
     notes = notes_path.read_text()
     outputs["notes.en"] = notes_path
 
@@ -126,6 +140,7 @@ def run(
 
     meta = {
         "episode": asdict(episode) | {"description_html": None},
+        "question": config.question or None,
         "transcript_source": transcript.source,
         "transcript_words": transcript.word_count,
         "languages": config.languages,
@@ -166,11 +181,12 @@ def _render_language(
                 script_llm.name, config.script_reasoning_effort, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER,
                 prompts.SHORTEN_SCRIPT_USER, prompts.OPENING_RULES, prompts.SCRIPT_FORMATS[config.script_format],
                 config.context, config.editor_notes, prompts.STYLE_RULES[config.style], language, config.max_minutes,
-                config.target_minutes, notes, intro,
+                config.target_minutes, notes, intro, config.question,
             )
             stage.text(script_path, script_fp, lambda: summarize.write_script(
                 script_llm, episode, notes, language, config.style, config.max_minutes, intro,
                 config.target_minutes, config.script_format, config.context, config.editor_notes,
+                config.question,
             ))
     outputs[f"script.{code}"] = script_path
     if config.stop_after == "script":

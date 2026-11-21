@@ -35,3 +35,9 @@ def test_slide_points_match_labels_loosely_or_by_order():
     assert [(p["label"], p["insight"]) for p in loose] == [("问题一", "I0"), ("结语", "I1")]
     by_order = summarize.slide_points(LLM(["Q1", "Wrap"]), sections)
     assert [p["insight"] for p in by_order] == ["I0", "I1"]
+
+
+def test_viewpoint_markers_split_like_questions():
+    sections = split_sections("开场。\n观点一：先学会提问。解释。\n观点二：再动手。\n结语：总结。")
+    assert [s.label for s in sections] == ["opening", "观点一", "观点二", "结语"]
+    assert sections[1].is_question

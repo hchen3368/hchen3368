@@ -6,7 +6,8 @@ from datetime import datetime
 import logging
 from pathlib import Path
 
-from . import bilibili, discovery, pipeline, publish, storage, tts
+from . import bilibili, discovery, pipeline, publish, scout, storage, tts
+from .llm import OpenAILLM
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -25,8 +26,10 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument("podcast", help="RSS feed URL or search term")
     run.add_argument("--episode", type=int, default=0, help="Index in the feed (0 = latest)")
     run.add_argument("--title-contains", help="Pick the first episode whose title contains this")
-    run.add_argument("--script-format", choices=["digest", "qa"], default="digest",
-                     help="digest: condensed walk-through; qa: spoken version of the notes' question map")
+    run.add_argument("--script-format", choices=["digest", "qa", "topic"], default="digest",
+                     help="digest: condensed walk-through; qa: spoken question map; "
+                          "topic: answer one viewer --question with the episode's viewpoints")
+    run.add_argument("--question", default="", help="The viewer question a topic video answers")
     run.add_argument("--cover-title", help="Big cover text; use \\n for a line break")
     run.add_argument("--cover-subtitle")
     run.add_argument("--cover-highlight", default="", help="Part of the cover title to highlight")
@@ -67,6 +70,16 @@ def main(argv: list[str] | None = None) -> None:
         "--force", action="store_true",
         help="Recompute transcript, notes, script and digest (downloaded audio and chunks are reused)",
     )
+
+    sc = sub.add_parser("scout", help="Propose question-led video candidates from recent episodes")
+    sc.add_argument("--sources", type=Path, default=Path("sources.json"))
+    sc.add_argument("--out", type=Path, default=Path("scout"))
+    sc.add_argument("--count", type=int, default=5)
+    sc.add_argument("--days", type=int, default=14, help="Only episodes published within this many days")
+    sc.add_argument("--per-source", type=int, default=6, help="Latest episodes to consider per podcast")
+    sc.add_argument("--llm-model", default="gpt-5.5")
+    sc.add_argument("--skip-produced", type=Path, nargs="*", default=[Path("output"), Path("bilibili-queue")],
+                    help="Skip episodes that already have a directory under these roots")
 
     voices = sub.add_parser("voices", help="List system voices of a TTS provider (MiniMax)")
     voices.add_argument("--filter", default="", help="Only voices whose id or name contains this")
@@ -136,6 +149,7 @@ def main(argv: list[str] | None = None) -> None:
             max_minutes=args.max_minutes,
             target_minutes=args.target_minutes,
             script_format=args.script_format,
+            question=args.question,
             context=args.context,
             script_file=args.script_file,
             stop_after=args.stop_after,
@@ -166,6 +180,11 @@ def main(argv: list[str] | None = None) -> None:
             print(f"  {name:<22} {path.name}")
         if args.publish:
             _publish([result.workdir])
+    elif args.command == "scout":
+        report, _ = scout.scout(OpenAILLM(args.llm_model), scout.load_sources(args.sources), args.out,
+                                args.count, args.days, args.per_source,
+                                produced=scout.produced_keys(*args.skip_produced))
+        print(report.read_text())
     elif args.command == "voices":
         for v in tts.MiniMaxTTS().list_voices():
             line = f"{v.get('voice_id')}\t{v.get('voice_name', '')}\t{' '.join(v.get('description') or [])}"

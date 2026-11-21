@@ -1,0 +1,13 @@
+{
+  "sources": [
+    {"name": "Lex Fridman Podcast", "feed": "https://lexfridman.com/feed/podcast/", "categories": ["科技", "科学", "人生"]},
+    {"name": "Dwarkesh Podcast", "feed": "https://apple.dwarkesh-podcast.workers.dev/feed.rss", "categories": ["科技", "科学"]},
+    {"name": "The Pragmatic Engineer", "feed": "https://api.substack.com/feed/podcast/458709.rss", "categories": ["科技", "职业成长"]},
+    {"name": "Lenny's Podcast", "feed": "https://api.substack.com/feed/podcast/10845.rss", "categories": ["商业思维", "职业成长"]},
+    {"name": "Acquired", "feed": "https://feeds.transistor.fm/acquired", "categories": ["商业思维", "投资"]},
+    {"name": "Invest Like the Best", "feed": "https://feeds.megaphone.fm/CLS2859450455", "categories": ["投资", "商业思维"]},
+    {"name": "Founders", "feed": "https://feeds.megaphone.fm/DSLLC6297708582", "categories": ["商业思维", "人生"]},
+    {"name": "The Knowledge Project", "feed": "https://feeds.megaphone.fm/FSMI7575968096", "categories": ["思维", "人生"]},
+    {"name": "Huberman Lab", "feed": "https://feeds.megaphone.fm/hubermanlab", "categories": ["科学", "健康", "人生"]}
+  ]
+}

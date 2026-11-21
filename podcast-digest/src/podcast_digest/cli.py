@@ -81,6 +81,12 @@ def main(argv: list[str] | None = None) -> None:
     sc.add_argument("--skip-produced", type=Path, nargs="*", default=[Path("output"), Path("bilibili-queue")],
                     help="Skip episodes that already have a directory under these roots")
 
+    sd = sub.add_parser("scout-decide", help="Record which of a day's candidates to make or drop")
+    sd.add_argument("date", help="YYYY-MM-DD of the scout list")
+    sd.add_argument("--make", type=int, nargs="*", default=[], help="Candidate numbers to make")
+    sd.add_argument("--drop", type=int, nargs="*", default=[], help="Candidate numbers not to propose again")
+    sd.add_argument("--out", type=Path, default=Path("scout"))
+
     voices = sub.add_parser("voices", help="List system voices of a TTS provider (MiniMax)")
     voices.add_argument("--filter", default="", help="Only voices whose id or name contains this")
 
@@ -185,6 +191,9 @@ def main(argv: list[str] | None = None) -> None:
                                 args.count, args.days, args.per_source,
                                 produced=scout.produced_keys(*args.skip_produced))
         print(report.read_text())
+    elif args.command == "scout-decide":
+        for c in scout.decide(args.out, args.date, args.make, args.drop):
+            print(f"Make: {c['title']}\n  {c['feed']} --title-contains {c['episode']!r}\n  --question {c['question']!r}")
     elif args.command == "voices":
         for v in tts.MiniMaxTTS().list_voices():
             line = f"{v.get('voice_id')}\t{v.get('voice_name', '')}\t{' '.join(v.get('description') or [])}"

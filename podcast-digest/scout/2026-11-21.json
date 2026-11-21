@@ -20,7 +20,8 @@
     "feed": "https://apple.dwarkesh-podcast.workers.dev/feed.rss",
     "link": "https://www.dwarkesh.com/p/paul-christiano-2",
     "episode_key": "paul-christiano-we-could-be-12-months-away-from-ais-that-can-92e4dd2f",
-    "transcript": "published"
+    "transcript": "published",
+    "first_proposed": "2026-11-21"
   },
   {
     "title": "AI写代码，公司该怎么管？",
@@ -43,7 +44,8 @@
     "feed": "https://api.substack.com/feed/podcast/458709.rss",
     "link": "https://newsletter.pragmaticengineer.com/p/software-factories-and-code-reviews",
     "episode_key": "software-factories-and-code-reviews-with-harjot-gill-d7cc5b3c",
-    "transcript": "published"
+    "transcript": "published",
+    "first_proposed": "2026-11-21"
   },
   {
     "title": "AI产品爆火，靠什么留住人？",
@@ -66,7 +68,8 @@
     "feed": "https://api.substack.com/feed/podcast/10845.rss",
     "link": "https://www.lennysnewsletter.com/p/metas-muse-how-we-launched-the-most",
     "episode_key": "meta-s-muse-how-we-launched-the-most-successful-consumer-pro-32e0386a",
-    "transcript": "published"
+    "transcript": "published",
+    "first_proposed": "2026-11-21"
   },
   {
     "title": "孩子从小持股，能改变命运吗？",
@@ -89,7 +92,8 @@
     "feed": "https://feeds.megaphone.fm/CLS2859450455",
     "link": "https://colossus.com/episode/restoring-the-american-dream/",
     "episode_key": "brad-gerstner-geoffrey-canada-raising-the-floor-for-every-am-7ff30106",
-    "transcript": "whisper"
+    "transcript": "whisper",
+    "first_proposed": "2026-11-21"
   },
   {
     "title": "为什么你总是戒不掉？",
@@ -112,6 +116,7 @@
     "feed": "https://feeds.megaphone.fm/hubermanlab",
     "link": "https://www.hubermanlab.com/episode/overcome-addictions-and-obsessions-of-all-kinds-anna-lembke",
     "episode_key": "overcome-addictions-obsessions-of-all-kinds-dr-anna-lembke-3a933b01",
-    "transcript": "whisper"
+    "transcript": "whisper",
+    "first_proposed": "2026-11-21"
   }
 ]

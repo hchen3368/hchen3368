@@ -47,6 +47,9 @@ def test_scout_writes_report_and_history_and_drops_bad_picks(monkeypatch, tmp_pa
     assert "标题1？" in report.read_text() and "需语音转写" in report.read_text()
     history = json.loads((tmp_path / "history.json").read_text())
     assert {h["episode_key"] for h in history} == {e.key for e in episodes}
+    _, again = scout.scout(llm, [scout.Source("Pod", "https://f")], tmp_path, 5, now=NOW)
+    assert [c["episode"] for c in again] == ["b", "a"]
+    (tmp_path / "backlog.json").write_text("[]")
     with pytest.raises(LookupError):
         scout.scout(llm, [scout.Source("Pod", "https://f")], tmp_path, 5, now=NOW)
 
@@ -68,3 +71,19 @@ def test_produced_keys_include_topic_videos(tmp_path):
     (tmp_path / "pod" / "ep-1234").mkdir(parents=True)
     (tmp_path / "pod" / "ep-5678--abcd1234").mkdir()
     assert scout.produced_keys(tmp_path, tmp_path / "missing") == {"ep-1234", "ep-5678"}
+
+
+def test_unchosen_candidates_carry_over_and_get_topped_up(monkeypatch, tmp_path):
+    episodes = [_episode(t) for t in "abcd"]
+    monkeypatch.setattr(scout.discovery, "list_episodes", lambda feed, limit: episodes)
+    sources = [scout.Source("Pod", "https://f")]
+    scout.scout(ScoutLLM([0, 1, 2]), sources, tmp_path, 3, now=NOW)
+    chosen = scout.decide(tmp_path, "2026-11-21", make=[2])
+    assert [c["episode"] for c in chosen] == ["b"]
+
+    llm = ScoutLLM([0])
+    tomorrow = NOW.replace(day=22)
+    report, picked = scout.scout(llm, sources, tmp_path, 3, now=tomorrow, produced={episodes[1].key})
+    assert [c["episode"] for c in picked] == ["a", "c", "d"]
+    assert "[0] Pod | d" in llm.prompts[0] and "| a\\n" not in llm.prompts[0]
+    assert "2026-11-21 起备选" in report.read_text() and "（新）" in report.read_text()

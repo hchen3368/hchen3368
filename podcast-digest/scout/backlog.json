@@ -94,29 +94,5 @@
     "episode_key": "overcome-addictions-obsessions-of-all-kinds-dr-anna-lembke-3a933b01",
     "transcript": "whisper",
     "first_proposed": "2026-11-21"
-  },
-  {
-    "title": "系统做大后，如何不崩？",
-    "question": "当产品用户和代码规模快速变大时，工程师如何让系统继续稳定、快速地演进？",
-    "question_en": "When a product's user base and codebase scale rapidly, how can engineers keep the system stable, fast, and able to evolve?",
-    "viewer_value": "观众能学到大规模软件产品背后的工程取舍：如何发现瓶颈、做负载测试、重构代码，并在增长中避免系统失控。",
-    "viewpoints": [
-      "Slack企业客户增长后的性能挑战",
-      "负载测试如何从临时救火变成体系",
-      "大规模重构如何重新掌控代码库",
-      "从GitHub数据库扩展到Cursor首字响应优化"
-    ],
-    "category": "科技",
-    "score": 9,
-    "estimated_minutes": 7,
-    "podcast": "The Pragmatic Engineer",
-    "episode": "Scaling Slack and GitHub with Maude Lemaire",
-    "published": "Thu, 05 Nov 2026 15:58:00 GMT",
-    "duration_minutes": 78,
-    "feed": "https://api.substack.com/feed/podcast/458709.rss",
-    "link": "https://newsletter.pragmaticengineer.com/p/scaling-slack-and-github-with-maude",
-    "episode_key": "scaling-slack-and-github-with-maude-lemaire-040db4a9",
-    "transcript": "published",
-    "first_proposed": "2026-11-22"
   }
 ]

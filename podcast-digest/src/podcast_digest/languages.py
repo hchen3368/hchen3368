@@ -82,7 +82,7 @@ LANGUAGES = {
             "(4) Terms and institutions: use the Chinese term or name without English in brackets "
             "(e.g. 华盛顿大学, 罗格斯大学, 哥本哈根大学, 阿姆达尔定律, 摩尔定律); keep only English abbreviations people say out loud "
             "in Chinese, such as AI, MIT, PR or CI, and product names. Never leave English words, phrases or "
-            "quotes in the narration: translate them (e.g. war room 作战室, pods 小分队, human code review is dead "
+            "quotes in the narration: translate them (e.g. war room 作战室, human code review is dead "
             "人工逐行审代码已死). Use established Chinese terms, never phonetic "
             "transliterations (e.g. 毒物兴奋效应, not 荷尔米西斯). "
             "(5) Short, spoken sentences; spoken connectors are welcome but do not pile up filler words; "

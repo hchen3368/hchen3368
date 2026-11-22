@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 
 CACHED_PREFIXES = ("transcript", "notes", "script", "digest", "subtitles", "post", "video", "frame", "stamps")
 SOCIAL_LANGUAGES = {"zh"}
+TOPIC_TARGET_MINUTES = 8
 
 
 @dataclass
@@ -59,6 +60,8 @@ class Config:
             raise ValueError(f"Unknown script format {self.script_format!r}; choose from {sorted(prompts.SCRIPT_FORMATS)}")
         if (self.script_format == "topic") != bool(self.question):
             raise ValueError("--question goes with --script-format topic, and topic needs a question")
+        if self.script_format == "topic" and self.target_minutes is None:
+            self.target_minutes = TOPIC_TARGET_MINUTES
         if self.style not in STYLES:
             raise ValueError(f"Unknown style {self.style!r}; choose from {STYLES}")
         for code in self.languages:
@@ -176,6 +179,7 @@ def _render_language(
                 lambda: summarize.translate_notes(llm, episode, notes, language),
             )
         script_path = workdir / f"script.{code}.txt"
+        spoken_target = config.target_minutes * config.tts_speed if config.target_minutes else None
         if config.script_file:
             approved = Path(config.script_file).read_text().strip() + "\n"
             stage.text(script_path, fingerprint("approved", approved), lambda: approved)
@@ -184,11 +188,11 @@ def _render_language(
                 script_llm.name, config.script_reasoning_effort, prompts.SCRIPT_SYSTEM, prompts.SCRIPT_USER,
                 prompts.SHORTEN_SCRIPT_USER, prompts.OPENING_RULES, prompts.SCRIPT_FORMATS[config.script_format],
                 config.context, config.editor_notes, prompts.STYLE_RULES[config.style], language, config.max_minutes,
-                config.target_minutes, notes, intro, config.question,
+                config.target_minutes, config.tts_speed, notes, intro, config.question,
             )
             stage.text(script_path, script_fp, lambda: summarize.write_script(
                 script_llm, episode, notes, language, config.style, config.max_minutes, intro,
-                config.target_minutes, config.script_format, config.context, config.editor_notes,
+                spoken_target, config.script_format, config.context, config.editor_notes,
                 config.question,
             ))
     outputs[f"script.{code}"] = script_path

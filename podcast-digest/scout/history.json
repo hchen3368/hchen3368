@@ -2,7 +2,8 @@
   {
     "date": "2026-11-21",
     "episode_key": "paul-christiano-we-could-be-12-months-away-from-ais-that-can-92e4dd2f",
-    "title": "AI失控，离我们还有多远？"
+    "title": "AI失控，离我们还有多远？",
+    "decision": "made"
   },
   {
     "date": "2026-11-21",
@@ -28,7 +29,6 @@
   {
     "date": "2026-11-22",
     "episode_key": "scaling-slack-and-github-with-maude-lemaire-040db4a9",
-    "title": "系统做大后，如何不崩？",
-    "decision": "made"
+    "title": "系统做大后，如何不崩？"
   }
 ]

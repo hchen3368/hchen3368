@@ -72,27 +72,51 @@
     "first_proposed": "2026-11-21"
   },
   {
-    "title": "系统做大后，如何不崩？",
-    "question": "当产品用户和代码规模快速变大时，工程师如何让系统继续稳定、快速地演进？",
-    "question_en": "When a product's user base and codebase scale rapidly, how can engineers keep the system stable, fast, and able to evolve?",
-    "viewer_value": "观众能学到大规模软件产品背后的工程取舍：如何发现瓶颈、做负载测试、重构代码，并在增长中避免系统失控。",
+    "title": "AI时代，产品经理更值钱了吗？",
+    "question": "AI时代，产品经理应该如何重新定义自己的价值和工作方式？",
+    "question_en": "In the AI era, how should product managers redefine their value and way of working?",
+    "viewer_value": "帮产品经理、创业者和技术管理者判断哪些PM能力会被AI放大，而不是被AI替代。",
     "viewpoints": [
-      "Slack企业客户增长后的性能挑战",
-      "负载测试如何从临时救火变成体系",
-      "大规模重构如何重新掌控代码库",
-      "从GitHub数据库扩展到Cursor首字响应优化"
+      "PM的核心是建立“共享大脑”",
+      "艺术家、科学家、GM三类PM",
+      "AI时代PM岗位反而增长",
+      "新PM管理者最常犯的错"
     ],
-    "category": "科技",
+    "category": "商业思维",
     "score": 9,
     "estimated_minutes": 7,
-    "podcast": "The Pragmatic Engineer",
-    "episode": "Scaling Slack and GitHub with Maude Lemaire",
-    "published": "Thu, 05 Nov 2026 15:58:00 GMT",
-    "duration_minutes": 78,
-    "feed": "https://api.substack.com/feed/podcast/458709.rss",
-    "link": "https://newsletter.pragmaticengineer.com/p/scaling-slack-and-github-with-maude",
-    "episode_key": "scaling-slack-and-github-with-maude-lemaire-040db4a9",
+    "podcast": "Lenny's Podcast: Product | Career | Growth",
+    "episode": "First principles: What it takes to be a great product manager in the AI era | Sherif Mansour",
+    "published": "Sun, 22 Nov 2026 13:31:53 GMT",
+    "duration_minutes": 81,
+    "feed": "https://api.substack.com/feed/podcast/10845.rss",
+    "link": "https://www.lennysnewsletter.com/p/first-principles-what-it-takes-to",
+    "episode_key": "first-principles-what-it-takes-to-be-a-great-product-manager-892bcd8a",
     "transcript": "published",
-    "first_proposed": "2026-11-22"
+    "first_proposed": "2026-11-23"
+  },
+  {
+    "title": "风投泡沫，又到顶了吗？",
+    "question": "现在的创投市场是在新一轮上升早期，还是又接近泡沫顶部？",
+    "question_en": "Is the current venture market early in a new cycle, or is it near the top of another bubble?",
+    "viewer_value": "帮创业者和投资人理解热钱、AI巨额融资和条款变化背后的市场温度，避免误判周期。",
+    "viewpoints": [
+      "现在更像2019还是2021",
+      "热轮出现更贵第二批额度",
+      "term sheet被撤回或重谈",
+      "单次训练烧掉10亿美元的neolab"
+    ],
+    "category": "投资",
+    "score": 8,
+    "estimated_minutes": 6,
+    "podcast": "Invest Like the Best with Patrick O'Shaughnessy",
+    "episode": "Ramtin Naimi - The State of Venture - [Invest Like the Best, EP.499]",
+    "published": "Fri, 06 Nov 2026 09:00:00 -0000",
+    "duration_minutes": 46,
+    "feed": "https://feeds.megaphone.fm/CLS2859450455",
+    "link": "https://colossus.com/episode/trillion-dollar-goalposts/",
+    "episode_key": "ramtin-naimi-the-state-of-venture-invest-like-the-best-ep-49-398b008a",
+    "transcript": "whisper",
+    "first_proposed": "2026-11-23"
   }
 ]

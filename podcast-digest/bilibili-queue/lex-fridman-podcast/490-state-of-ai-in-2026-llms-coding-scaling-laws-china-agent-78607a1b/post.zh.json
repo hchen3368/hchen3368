@@ -1,0 +1,72 @@
+{
+  "title": "DeepSeek之后，AI谁在赢？",
+  "cover_title": "AI版图2026",
+  "cover_subtitle": "中美开源与Agent竞速",
+  "cards": [
+    {
+      "heading": "谁在赢",
+      "points": [
+        "“赢”要看时间尺度和赛道",
+        "编码、开源权重、产品采用各自分化",
+        "预算和硬件约束比单点创意更关键"
+      ]
+    },
+    {
+      "heading": "DeepSeek时刻",
+      "points": [
+        "R1 重新抬高了行业预期",
+        "open weights 让模型更易部署与扩散",
+        "之后变成快速吸收、快速追赶的循环"
+      ]
+    },
+    {
+      "heading": "模型怎么用",
+      "points": [
+        "快回答、慢思考要能切换",
+        "长上下文、编码、实时检索各有专长",
+        "实际工作流更像模型组合，而非单模型"
+      ]
+    },
+    {
+      "heading": "训练还在变",
+      "points": [
+        "pre-training、mid-training、post-training分工更清晰",
+        "RLVR 是 2025 年后训练的重要进展",
+        "数据质量、过滤、OCR 都在放大影响"
+      ]
+    },
+    {
+      "heading": "未来怎么来",
+      "points": [
+        "架构大体仍是 decoder-only transformer",
+        "真正变化更多来自系统、硬件与部署",
+        "AGI 更像一串里程碑，而非单一瞬间"
+      ]
+    }
+  ],
+  "body": "这期 Lex Fridman Podcast #490 讨论的是 2026 年的 AI 版图：中美开源竞赛、DeepSeek R1 的冲击、LLM 编码、scaling laws、RLVR、长上下文、agents、GPU 和 AGI。\n\n📌 两位嘉宾都认为，“赢家通吃”不太像现实，更可能是多个赛道同时拉开差距。\n\n📌 他们也反复强调：前沿不只是模型本身，系统、数据、许可、硬件与产品分发同样重要。\n\n📌 实用层面，真正好用的往往是一整套工具组合：快模型、思考模型、代码工具、长上下文和实时检索各司其职。\n\n你最认同这期里的哪一点：模型、数据、系统，还是开源生态？\n\n来源：Lex Fridman Podcast（英文原节目）；长话短听整理的 AI 辅助总结。",
+  "tags": [
+    "AI",
+    "大模型",
+    "DeepSeek",
+    "开源模型",
+    "RLVR",
+    "Agent",
+    "Scaling Laws",
+    "中美AI"
+  ],
+  "bilibili_title": "Nathan Lambert & Sebastian Raschka聊2026 AI版图",
+  "bilibili_description": "本期总结 Lex Fridman Podcast #490，围绕 2026 年 AI 版图：DeepSeek R1 的冲击、美国 vs 中国开源模型竞赛、LLM 编码、RLVR、scaling laws、长上下文、agents 与 GPU 生态。亮点包括：开源权重为何还能继续扩散、模型为什么要快慢切换、前沿进步更多来自系统还是架构。来源：Lex Fridman Podcast（英文原节目）。本视频为 AI 辅助整理的原节目摘要。",
+  "bilibili_tags": [
+    "AI",
+    "大模型",
+    "LexFridman",
+    "DeepSeek",
+    "开源模型",
+    "RLVR",
+    "Agent",
+    "GPU",
+    "AGI",
+    "长上下文"
+  ]
+}

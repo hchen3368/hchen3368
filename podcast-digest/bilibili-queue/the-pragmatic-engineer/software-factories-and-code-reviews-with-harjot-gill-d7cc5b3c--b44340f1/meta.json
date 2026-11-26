@@ -1,0 +1,42 @@
+{
+  "episode": {
+    "podcast_title": "The Pragmatic Engineer",
+    "title": "Software factories and code reviews with Harjot Gill",
+    "audio_url": "https://api.substack.com/feed/podcast/225268679/03e84b1a6e6cd8cba579e218d4fd9d1f.mp3",
+    "guid": "substack:post:225268679",
+    "link": "https://newsletter.pragmaticengineer.com/p/software-factories-and-code-reviews",
+    "published": "Wed, 18 Nov 2026 18:08:52 GMT",
+    "duration_seconds": 5197,
+    "description_html": null,
+    "transcript_urls": [
+      [
+        "https://api.substack.com/feed/podcast/transcript/225268679/5716fdd023036d0a64c51e7e8330539c.vtt",
+        "text/vtt"
+      ]
+    ]
+  },
+  "question": "当AI能大量产出代码时，工程团队应该如何重新设计协作、评审与质量控制？",
+  "transcript_source": "published:https://api.substack.com/feed/podcast/transcript/225268679/5716fdd023036d0a64c51e7e8330539c.vtt",
+  "transcript_words": 18735,
+  "languages": [
+    "zh"
+  ],
+  "styles": {
+    "zh": "auto"
+  },
+  "durations_seconds": {
+    "digest.zh": 422.2
+  },
+  "llm": "openai:gpt-5.4-mini",
+  "tts": {
+    "zh": "minimax:speech-2.8-hd:Chinese (Mandarin)_Warm_Bestie"
+  },
+  "timings_seconds": {
+    "transcript": 0.0,
+    "notes": 0.0,
+    "text.zh": 0.0,
+    "tts.zh": 0.0,
+    "social.zh": 0.0,
+    "video.zh": 41.3
+  }
+}
